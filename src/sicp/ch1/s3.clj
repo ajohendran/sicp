@@ -79,7 +79,7 @@
 ;; f(a+(n-2)h) + 4f(a+(n-1)h) + f(a+nh)
 
 (defn integral [f a b n]
-  (let [h (double (/ (- b a) n))
+  (let [h (/ (- b a) n)
         term (fn [x]
                (+ (f (+ a (* x h)))
                   (* 4 (f (+ a (* (+ x 1) h))))
@@ -88,3 +88,118 @@
     (* (/ h 3)
        (sum term 0 nxt (- n 2)))))
 
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 1.31
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn product [term a nxt b]
+  (loop [acc 1
+        x a]
+    (if (> x b)
+      acc
+      (recur (* acc (term x)) (nxt x)))))
+
+(defn factorial [n]
+  (product identity 1 inc n))
+
+
+(defn pi-apprx [n]
+  (let [term (fn [x]
+               (/ (* x (+ x 2))
+                  (* (inc x) (inc x))))
+        nxt (fn [y] (+ y 2))]
+    (double (* 4 (product term 2 nxt (* 2 n))))))
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 1.32
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn accumulator [combiner null-val term a nxt b]
+  (loop [acc null-val
+        x a]
+    (if (> x b)
+      acc
+      (recur (combiner acc (term x)) (nxt x)))))
+
+(defn sum [term a nxt b]
+  (accumulator + 0 term a nxt b))
+
+(defn product [term a nxt b]
+  (accumulator * 1 term a nxt b))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 1.33
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defn filtered-accumulate [combiner null-val term a nxt b fltr]
+  (loop [acc null-val
+        x a]
+    (if (> x b)
+      acc
+      (recur (if (fltr x)
+               (combiner acc (term x))
+               acc)
+             (nxt x)))))
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 1.34
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn f [g]
+  (g 2))
+
+;; (f f) seems silly. it will call f with 2 and then try to use 2 as a fuction
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; 1.3 Procedures as General Methods
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def ^:dynamic *tolerance*  0.00001)
+(defn fixed-point [f guess]
+  (let [n (f guess)]
+    (if (< (Math/abs (- n guess)) *tolerance*)
+      guess
+      (recur f n))))
+
+(defn sqrt [x]
+  (fixed-point (fn [y] (/ x y)) 1.0))
+
+(defn sqrt [x]
+  (letfn [(avg [a b] (/ (+ a b) 2))]
+    (fixed-point (fn [y] (avg y (/ x y))) 1.0)))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 1.35
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;; definition of golden ratio is (x * x) = (x + 1)
+;; same as x -> 1 + 1/x
+
+(defn gldnrto []
+  (fixed-point (fn [y] (+ 1 (/ 1 y))) 1.0 ))
+
+
+(defn fixed-point [f guess]
+  (let [n (f guess)]
+    (println "approx (" guess ") -> " n)
+    (if (< (Math/abs (- n guess)) *tolerance*)
+      guess
+      (recur f n))))
+
+
+(defn x-raised-x [x]
+  (fixed-point (fn [y] (/ (Math/log x) (Math/log y))) 1.1))
