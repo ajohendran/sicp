@@ -166,7 +166,7 @@
 ;;; 1.3 Procedures as General Methods
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def ^:dynamic *tolerance*  0.00001)
+(def ^:dynamic *tolerance*  0.0000001)
 (defn fixed-point [f guess]
   (let [n (f guess)]
     (if (< (Math/abs (- n guess)) *tolerance*)
@@ -176,15 +176,16 @@
 (defn sqrt [x]
   (fixed-point (fn [y] (/ x y)) 1.0))
 
+(defn avg [a b]
+  (/ (+ a b) 2))
+
 (defn sqrt [x]
-  (letfn [(avg [a b] (/ (+ a b) 2))]
-    (fixed-point (fn [y] (avg y (/ x y))) 1.0)))
+  (fixed-point (fn [y] (avg y (/ x y))) 1.0))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 1.35
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 
 ;; definition of golden ratio is (x * x) = (x + 1)
 ;; same as x -> 1 + 1/x
@@ -192,6 +193,10 @@
 (defn gldnrto []
   (fixed-point (fn [y] (+ 1 (/ 1 y))) 1.0 ))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 1.36
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn fixed-point [f guess]
   (let [n (f guess)]
@@ -202,4 +207,53 @@
 
 
 (defn x-raised-x [x]
-  (fixed-point (fn [y] (/ (Math/log x) (Math/log y))) 1.1))
+  (fixed-point (fn [y] (/ (Math/log10 x) (Math/log10 y))) 1.1))
+
+
+(defn x-raised-x [x]
+  (fixed-point (fn [y] (avg y (/ (Math/log x) (Math/log y)))) 1.1))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 1.37
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;recursive
+(defn cont-frac 
+  ([n d k] (cont-frac n d k 1))
+  ([n d k cntr]
+   (if (< cntr k)
+     (/ (n cntr) (+ (d cntr) (cont-frac n d k (inc cntr))))
+     (/ (n cntr) (d cntr)))))
+
+
+
+;; iterative
+(defn cont-frac 
+  ([n d k] (cont-frac n d k 0))
+  ([n d k res]
+   (if (= k 1) (/ (n 1) (+ (d 1) res))
+       (recur n d (dec k) (double (/ (n k) (d k)))))))
+
+;; (cont-frac (constantly 1) (constantly 1) 500)
+;; k of 12 provides answer to accuracy of 4 decimal places
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 1.38
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; 1  -> 1 * 2  
+;; 4  -> 2 *2
+;; 7  -> 3 * 2
+;; 10 -> 4 * 2
+;; 13 -> 5 * 2
+
+
+(defn denom-euler [n]
+  (if (== 0 (mod (dec n) 3))
+    (* 2 (inc (quot n 3)))
+    1))
+
+;; (cont-frac (constantly 1) denom-euler 100)
+
+(defn euler-c ())
