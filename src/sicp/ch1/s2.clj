@@ -9,21 +9,43 @@
 ;;; Ex 1.9
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (+ a b)
-  (if (= a 0)
-      b
-      (inc (+ (dec a) b))))
-
-(defn plus [a b]
+(defn plus-rec [a b]
   (if (= a 0)
     b
-    (inc (plus (dec a) b))))
+    (inc (plus-rec (dec a) b))))
+
+;; Using substitution model fpr (plus-rec 4 5)
+;;
+;; (plus-rec 4 5)
+;; (inc (plus-rec 3 5))
+;; (inc (inc (plus-rec 2 5)))
+;; (inc (inc (inc (plus-rec 1 5))))
+;; (inc (inc (inc (inc (plus-rec 0 5)))))
+;; (inc (inc (inc (inc 5))))
+;; (inc (inc (inc 6)))
+;; (inc (inc 7))
+;; (inc 8)
+;; 9
+;; CLearly this process has a recursion shape
 
 
-(define (+ a b)
+(defn plus-itr [a b]
   (if (= a 0)
-      b
-      (+ (dec a) (inc b))))
+    b
+    (plus-itr (dec a) (inc b))))
+
+;; Using substitution model fpr (plus-itr 4 5)
+;;
+;; (plus-itr 4 5)
+;; (plus-itr 3 6)
+;; (plus-itr 2 7)
+;; (plus-itr 1 8)
+;; (plus-itr 0 9)
+;; 9
+
+;; Clearly the above process is iterative since state variables summarize the
+;; state of the computation
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -154,3 +176,8 @@
       (print (pascal r c))
       (if (= r c) (println) (print "    ")))))
 
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 1.14 Pascal's Triangle
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
