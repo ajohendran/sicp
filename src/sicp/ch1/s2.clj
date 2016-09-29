@@ -136,7 +136,13 @@
 ;;; Example: Counting change
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
+(defn first-denomination [kinds-of-coins]
+  (cond (= kinds-of-coins 1) 1
+        (= kinds-of-coins 2) 5
+        (= kinds-of-coins 3) 10
+        (= kinds-of-coins 4) 25
+        :else 50))
+        
 (defn cc [amount kinds-of-coins]
   (cond (= amount 0) 1
         (or (< amount 0) (= kinds-of-coins 0)) 0
@@ -144,15 +150,6 @@
                      (- kinds-of-coins 1))
                  (cc (- amount (first-denomination kinds-of-coins))
                      kinds-of-coins))))
-
-(defn first-denomination [kinds-of-coins]
-  (cond (= kinds-of-coins 1) 1
-        (= kinds-of-coins 2) 5
-        (= kinds-of-coins 3) 10
-        (= kinds-of-coins 4) 25
-        :else 50))
-
-
 
 
 
@@ -171,11 +168,10 @@
   (for [r (range 1 (inc n))
         c (map inc (range r))]
     (do
-      (if (= c 1) (print (apply str
-                                (take (- (inc n) r) (repeat "   ")))))
-      (print (pascal r c))
+      (if (= c 1) 
+      (print (apply str (take (- (inc n) r) (repeat "   ")))))
+            (print (pascal r c)) 
       (if (= r c) (println) (print "    ")))))
-
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
