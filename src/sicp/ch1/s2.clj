@@ -151,7 +151,13 @@
                  (cc (- amount (first-denomination kinds-of-coins))
                      kinds-of-coins))))
 
-
+(defn cc-2 [amount kinds-of-coins]
+  (cond (or (= amount 0) (= kinds-of-coins 1)) 1
+        (or (< amount 0) (= kinds-of-coins 0)) 0
+        :else (+ (cc-2 amount
+                     (- kinds-of-coins 1))
+                 (cc-2 (- amount (first-denomination kinds-of-coins))
+                     kinds-of-coins))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 1.12 Pascal's Triangle
