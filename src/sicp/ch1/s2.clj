@@ -180,7 +180,55 @@
       (if (= r c) (println) (print "    ")))))
 
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Ex 1.14 Pascal's Triangle
+;;; Ex. 1.14 Coin Counting Order of Growth
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;Testing
+
+;; Amount —> N
+;; Denominations —> d1(penny), d2(nickel), d3(dime), d4(quarter), d5(half-dollar)
+;; cc(N,d) will be represented as [N,d]
+
+
+;; Analysis:
+
+;; With only denomination d1:
+;; [N,d1]
+;; Order of growth —> N steps
+
+
+;; With denominations d1 & d2:
+;; [N,d2]
+;; [N-d2,d2] + [N,d1]
+;; [N-2*d2,d2] + [N-d2,d1] + [N,d1]
+;; [N-3*d2,d2] + [N-2*d2,d1] + [N-d2,d1] + [N,d1]
+;; [N-4*d2,d2] + [N-3*d2,d1] + [N-2*d2,d1] + [N-d2,d1] + [N,d1]
+
+;; For sufficiently large values of N, values such as [N-d2] , [N-2*d2] , [N-3*d2] , etc. are pretty close to N.
+;; They can be considered to be same as N. So we have 
+
+;; [N-4*d2,d2] + [N,d1] + [N,d1] + [N,d1] + [N,d1]
+;; [N-4*d2,d2] + 4N
+
+;; This means, for every time we subtract d2 from N, we have N steps.
+;; Order of growth —> N/d2*N —> N^2 steps.
+
+
+;; With denominations d1, d2 & d3:
+;; [N-d3,d3] + [N,d2]
+;; [N-2*d3,d3] + [N-d3,d2] + [N,d2]
+;; [N-3*d3,d3] + [N-2*d3,d2] + [N-d3,d2] + [N,d2]
+;; [N-4*d3,d3] + [N-3*d3,d2] + [N-2*d3,d2] + [N-d3,d2] + [N,d2]
+
+;; Similar to previous analysis, for sufficiently large N, N-4*d3 can be considered just N.
+;; [N-4*d3,d3] + [N,d2] + [N,d2] + [N,d2] + [N,d2]
+;; [N-4*d3,d3] + 4[N,d2]
+
+;; So, for every time we subtract d3 from N, we have to calculate steps for [N,d2]
+;; Order of growth —> N/d3*N^2 —> N^3 steps.
+
+;; The sequence of steps would be similar with more denominations. For 5 coins we have N^5 steps.
+;; In general, for d different coins, the number of steps is roughly N^d.
+
+
+
