@@ -231,4 +231,56 @@
 ;; In general, for d different coins, the number of steps is roughly N^d.
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex. 1.15 Sine , Order of growth
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn cube [x] (* x x x))
+
+(defn p [x] (- (* 3 x) (* 4 (cube x))))
+
+(defn sine [angle]
+	(if (not (> (Math/abs angle) 0.01))
+	angle
+	(p (sicp.ch1.s2/sine (/ angle 3.0)))))
+;; namespace qualifying so function can be traced in clojurescript
+               
+
+;; a. For (sine 12.15), procedure p is applied 5 times.
+;; b.Order of growth. 
+;;   We repeatedly divide until the quotient is less than 01.
+;;   That is, 
+;;    a / (3^n) < 0.1
+;;   a * 10 < 3^n
+;;   Taking log base 3
+;;   log (a * 10) base 3 < n * log (3) base 3
+;;   n > log (a * 10) base 3
+;;   So order of growth is ceiling[log(a*10) base 3]
+;;   Since order of growth is defined as k1*f(n) < R(n) < k2f(n) 
+;;   where k1 and k2 are arbitrary constants, the base of log really doesn't matter
+;;   So order of growth is essentially log(a), that is logarithmic in a.
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex. 1.16 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn expt-r [b n]
+	(if (= n 1) 
+	  b
+	  (* b (sicp.ch1.s2/expt-r b (dec n)))))
+
+(defn expt-i
+	([b n] (sicp.ch1.s2/expt-i b n 1))
+	([b n v] 
+		(if (= n 0) 
+		  v
+		  (recur b (dec n) (* b v)))
+		 
+
+  
+
+
+
+ 
 
