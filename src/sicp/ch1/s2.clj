@@ -142,7 +142,7 @@
         (= kinds-of-coins 3) 10
         (= kinds-of-coins 4) 25
         :else 50))
-        
+
 (defn cc [amount kinds-of-coins]
   (cond (= amount 0) 1
         (or (< amount 0) (= kinds-of-coins 0)) 0
@@ -155,9 +155,9 @@
   (cond (or (= amount 0) (= kinds-of-coins 1)) 1
         (or (< amount 0) (= kinds-of-coins 0)) 0
         :else (+ (cc-2 amount
-                     (- kinds-of-coins 1))
+                       (- kinds-of-coins 1))
                  (cc-2 (- amount (first-denomination kinds-of-coins))
-                     kinds-of-coins))))
+                       kinds-of-coins))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 1.12 Pascal's Triangle
@@ -175,8 +175,8 @@
         c (map inc (range r))]
     (do
       (if (= c 1) 
-      (print (apply str (take (- (inc n) r) (repeat "   ")))))
-            (print (pascal r c)) 
+        (print (apply str (take (- (inc n) r) (repeat "   ")))))
+      (print (pascal r c)) 
       (if (= r c) (println) (print "    ")))))
 
 
@@ -239,13 +239,46 @@
 (defn p [x] (- (* 3 x) (* 4 (cube x))))
 
 (defn sine [angle]
-	(if (not (> (Math/abs angle) 0.01))
-	angle
-	(p (sicp.ch1.s2/sine (/ angle 3.0)))))
+  (if (not (> (Math/abs angle) 0.01))
+    angle
+    (p (sicp.ch1.s2/sine (/ angle 3.0)))))
 ;; namespace qualifying so function can be traced in clojurescript
-               
 
-;; a. For (sine 12.15), procedure p is applied 5 times.
+
+;; a. For (sine 12.15), procedure p is applied 5 times. See trace below.
+;; (sine 12.15)
+;; TRACE t10663: (sicp.ch1.s2/sine 12.15)
+;; TRACE t10664: | (sicp.ch1.s2/sine 4.05)
+;; TRACE t10665: | | (sicp.ch1.s2/sine 1.3499999999999999)
+;; TRACE t10666: | | | (sicp.ch1.s2/sine 0.44999999999999996)
+;; TRACE t10667: | | | | (sicp.ch1.s2/sine 0.15)
+;; TRACE t10668: | | | | | (sicp.ch1.s2/sine 0.049999999999999996)
+;; TRACE t10669: | | | | | | (sicp.ch1.s2/sine 0.016666666666666666)
+;; TRACE t10670: | | | | | | | (sicp.ch1.s2/sine 0.005555555555555556)
+;; TRACE t10670: | | | | | | | => 0.005555555555555556
+;; TRACE t10671: | | | | | | | (sicp.ch1.s2/p 0.005555555555555556)
+;; TRACE t10671: | | | | | | | => 0.016665980795610425
+;; TRACE t10669: | | | | | | => 0.016665980795610425
+;; TRACE t10672: | | | | | | (sicp.ch1.s2/p 0.016665980795610425)
+;; TRACE t10672: | | | | | | => 0.04997942615445553
+;; TRACE t10668: | | | | | => 0.04997942615445553
+;; TRACE t10673: | | | | | (sicp.ch1.s2/p 0.04997942615445553)
+;; TRACE t10673: | | | | | => 0.1494388954247979
+;; TRACE t10667: | | | | => 0.1494388954247979
+;; TRACE t10674: | | | | (sicp.ch1.s2/p 0.1494388954247979)
+;; TRACE t10674: | | | | => 0.4349676185073074
+;; TRACE t10666: | | | => 0.4349676185073074
+;; TRACE t10675: | | | (sicp.ch1.s2/p 0.4349676185073074)
+;; TRACE t10675: | | | => 0.9757248787040262
+;; TRACE t10665: | | => 0.9757248787040262
+;; TRACE t10676: | | (sicp.ch1.s2/p 0.9757248787040262)
+;; TRACE t10676: | | => -0.7885380669825341
+;; TRACE t10664: | => -0.7885380669825341
+;; TRACE t10677: | (sicp.ch1.s2/p -0.7885380669825341)
+;; TRACE t10677: | => -0.40438666108762367
+;; TRACE t10663: => -0.40438666108762367
+;; -0.40438666108762367
+
 ;; b.Order of growth. 
 ;;   We repeatedly divide until the quotient is less than 01.
 ;;   That is, 
@@ -262,25 +295,55 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Ex. 1.16 
+;;; Ex. 1.16 Exponential
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn expt-r [b n]
-	(if (= n 1) 
-	  b
-	  (* b (sicp.ch1.s2/expt-r b (dec n)))))
+  (if (= n 1) 
+    b
+    (* b (sicp.ch1.s2/expt-r b (dec n)))))
 
 (defn expt-i
-	([b n] (sicp.ch1.s2/expt-i b n 1))
-	([b n v] 
-		(if (= n 0) 
-		  v
-		  (recur b (dec n) (* b v)))
-		 
+  ([b n] (sicp.ch1.s2/expt-i b n 1))
+  ([b n v] 
+   (if (= n 0) 
+     v
+     (recur b (dec n) (* b v)))))
 
-  
+;; clojure already has even? defined in clojure.core namespace
+;; (defn even?
+;;   "Returns true if n is even, throws an exception if n is not an integer"
+;;   {:added "1.0"
+;;    :static true}
+;;    [n] (if (integer? n)
+;;         (zero? (bit-and (clojure.lang.RT/uncheckedLongCast n) 1))
+;;         (throw (IllegalArgumentException. (str "Argument must be an integer: " n)))))
 
 
+(defn square [n] (* n n))
 
- 
+(defn fast-expt-r [b n]
+  (cond
+    (= n 0) 1
+    (even? n) (square (sicp.ch1.s2/fast-expt-r b (/ n 2)))
+    :else (* b (sicp.ch1.s2/fast-expt-r b (dec n)))))
+
+;; sicp.ch1.s2> (fast-expt-r 4 5)
+;; TRACE t11383: (sicp.ch1.s2/fast-expt-r 4 5)
+;; TRACE t11384: | (sicp.ch1.s2/fast-expt-r 4 4)
+;; TRACE t11385: | | (sicp.ch1.s2/fast-expt-r 4 2)
+;; TRACE t11386: | | | (sicp.ch1.s2/fast-expt-r 4 1)
+;; TRACE t11387: | | | | (sicp.ch1.s2/fast-expt-r 4 0)
+;; TRACE t11387: | | | | => 1
+;; TRACE t11386: | | | => 4
+;; TRACE t11388: | | | (sicp.ch1.s2/square 4)
+;; TRACE t11388: | | | => 16
+;; TRACE t11385: | | => 16
+;; TRACE t11389: | | (sicp.ch1.s2/square 16)
+;; TRACE t11389: | | => 256
+;; TRACE t11384: | => 256
+;; TRACE t11383: => 1024
+;; 1024
+
+
 
