@@ -347,3 +347,48 @@
 
 
 
+(defn fast-expt-i [b n a]
+  (cond (< n 1) a
+        (even? n) (fast-expt-i (* b b) (/ n 2) a)
+        :else (fast-expt-i b (dec n) (* a b))))
+
+
+;; sicp.ch1.s2> (fast-expt-i 2 37 1)
+;; TRACE t11000: (sicp.ch1.s2/fast-expt-i 2 37 1)
+;; TRACE t11001: | (sicp.ch1.s2/fast-expt-i 2 36 2)
+;; TRACE t11002: | | (sicp.ch1.s2/fast-expt-i 4 18 2)
+;; TRACE t11003: | | | (sicp.ch1.s2/fast-expt-i 16 9 2)
+;; TRACE t11004: | | | | (sicp.ch1.s2/fast-expt-i 16 8 32)
+;; TRACE t11005: | | | | | (sicp.ch1.s2/fast-expt-i 256 4 32)
+;; TRACE t11006: | | | | | | (sicp.ch1.s2/fast-expt-i 65536 2 32)
+;; TRACE t11007: | | | | | | | (sicp.ch1.s2/fast-expt-i 4294967296 1 32)
+;; TRACE t11008: | | | | | | | | (sicp.ch1.s2/fast-expt-i 4294967296 0 137438953472)
+;; TRACE t11008: | | | | | | | | => 137438953472
+;; TRACE t11007: | | | | | | | => 137438953472
+;; TRACE t11006: | | | | | | => 137438953472
+;; TRACE t11005: | | | | | => 137438953472
+;; TRACE t11004: | | | | => 137438953472
+;; TRACE t11003: | | | => 137438953472
+;; TRACE t11002: | | => 137438953472
+;; TRACE t11001: | => 137438953472
+;; TRACE t11000: => 137438953472
+;; 137438953472
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex. 1.16 Multiplication in terms of addition
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defn double [n] (* n 2))
+(defn halve [n] (/ n 2))
+
+(defn mult-r [a b]
+  (if (= b 0)
+    0
+    (+ a (mult-r a (dec b)))))
+
