@@ -350,7 +350,7 @@
 (defn fast-expt-i [b n a]
   (cond (< n 1) a
         (even? n) (fast-expt-i (* b b) (/ n 2) a)
-        :else (fast-expt-i b (dec n) (* a b))))
+        :else (fast-expt-i b (dec n) (* a b)))) ;; use 'recur' for real tail recursion on the JVM
 
 
 ;; sicp.ch1.s2> (fast-expt-i 2 37 1)
@@ -384,11 +384,68 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(defn double [n] (* n 2))
+(defn dbl [n] (+ n n)) ;; work double already used in clojure core
 (defn halve [n] (/ n 2))
+
+;; just thinking about nature of arithmetics &
+;; recursion with following fuctions
+(defn add-i [a b]
+  (if (= b 0)
+    a
+    (add-i (inc a) (dec b)))) ;; use 'recur' for real tail recursion on the JVM
+
+(defn add-r [a b]
+  (if (= b 0)
+    a
+    (inc (add-r a (dec b))))) 
+
 
 (defn mult-r [a b]
   (if (= b 0)
     0
     (+ a (mult-r a (dec b)))))
 
+(defn mult-i [a b v]
+  (if (= b 0)
+    v
+    (recur a (dec b) (+ a v))))
+
+
+(defn fast-mult-r [a b]
+  (cond
+    (= b 1) a
+    (even? b) (dbl (fast-mult-r a  (halve b))) 
+    :else (+ a (fast-mult-r a (dec b)))))
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex. 1.18 Fast multiplication by iteration
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn fast-mult-i [a b v]
+  (cond
+    (= b 0) v
+    (even? b) (fast-mult-i (dbl a) (halve b) v) 
+    :else (fast-mult-i a (dec b) (+ a v) )))
+
+
+;; sicp.ch1.s2> (fast-mult-i 25 5 0)
+;; TRACE t11062: (sicp.ch1.s2/fast-mult-i 25 5 0)
+;; TRACE t11063: | (sicp.ch1.s2/fast-mult-i 25 4 25)
+;; TRACE t11064: | | (sicp.ch1.s2/fast-mult-i 50 2 25)
+;; TRACE t11065: | | | (sicp.ch1.s2/fast-mult-i 100 1 25)
+;; TRACE t11066: | | | | (sicp.ch1.s2/fast-mult-i 100 0 125)
+;; TRACE t11066: | | | | => 125
+;; TRACE t11065: | | | => 125
+;; TRACE t11064: | | => 125
+;; TRACE t11063: | => 125
+;; TRACE t11062: => 125
+;; 125
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex. 1.19 Fibonacci in logarithmic steps
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
