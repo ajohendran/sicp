@@ -405,6 +405,7 @@
     0
     (+ a (mult-r a (dec b)))))
 
+
 (defn mult-i [a b v]
   (if (= b 0)
     v
@@ -414,7 +415,7 @@
 (defn fast-mult-r [a b]
   (cond
     (= b 1) a
-    (even? b) (dbl (fast-mult-r a  (halve b))) 
+    (even? b) (dbl (fast-mult-r a (halve b))) 
     :else (+ a (fast-mult-r a (dec b)))))
 
 
@@ -451,3 +452,215 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
+
+;; 0,1,1,2,3,5,8,13,21,34,55 .....
+
+
+;; (defn fib
+;;   ([n] (fib 1 0 0 1 n))
+;;   ([a b p q c]
+;;    (cond (= c 0) b
+;;          (even? c) (fib a
+;;                         b
+;;                         ?
+;;                         ?
+;;                         (/ c 2))
+;;          :else (fib (+ (* b q) (* a q) (* a p))
+;;                     (+ (* b p) (* a q))
+;;                     p
+;;                     q
+;;                     (dec c)))))
+;; (fib 2)
+;; (fib 1 0 p q 2)
+;; (fib 1 0 p1 q1 1)
+;; (fib [q1+p1] [q1] 0)
+;;q'=1
+
+;; (fib 3)
+;; (fib 1 0 p q 3) 
+;; (fib 1 1 p q 2)
+;; (fib 1 1 p1 q1 1)
+;; (fib [2q1+p1] [p1+q1] p1 q1 0)
+;;p1+q1 = 2
+;; therefore p1=1, q1=1
+
+;; (fib 4)
+;; (fib 1 0 0 1 4)
+;; (fib 1 0 p1 q1 2)
+;; (fib 1 0 p2 q2 1)
+;; (fib [q2+p2] [q2] p2 q2 0)
+;;q2 = 3
+
+;; (fib 5)
+;; (fib 1 0 0 1 5)
+;; (fib 1 1 0 1 4)
+;; (fib 1 1 p' q' 2)
+;; (fib 1 1 p'' q'' 1)
+;; (fib [2q2+p2] [p2+q2] p2 q2 0)
+;;p2+q2 = 5
+;;therefore p2 = 2, q2=3
+
+;; From above analysis, it can be seen that p and q go up a level
+;; when n = 2^x. Therefore it doesn't make sense to analyse for
+;; n values of 6,7,9,10,11,12,13,14,15,17 etc.
+
+;; (fib 8)
+;; (fib 1 0 p q 8)
+;; (fib 1 0 p1 q1 4)
+;; (fib 1 0 p2 q2 2)
+;; (fib 1 0 p3 q3 1)
+;; (fib [q3+p3]
+;;      [q3]
+;;      p3
+;;      q3
+;;      0)
+;;q3 = 21
+
+;; (fib 9)
+;; (fib 1 0 0 1 9)
+;; (fib 1 1 p q 8)
+;; (fib 1 1 p1 q1 4)
+;; (fib 1 1 p2 q2 2)
+;; (fib 1 1 p3 q3 1)
+;; (fib [21+21+p3]
+;;      [p3+21]
+;;      p3
+;;      21
+;;      0)
+;; p3+21 = 34
+;; therefore p3 = 13
+
+;; Based on above analysis, we can see q4 will be (fib 16) -> 987
+;; p4 will be (- (fib 17) q4)  -> 1597 - 987 -> 610
+
+;; So we have
+;; p0, q0 -> 0,1      -> fib0 , fib1
+;; p1, q1 -> 1,1      -> fib1 , fib2
+;; p2, q2 -> 2,3      -> fib3 , fib4
+;; p3, q3 -> 13,21    -> fib7 , fib8
+;; p4, q4 -> 610, 987 -> fib15, fib16
+
+
+;;If we start with a=2 , b=1  and apply the transformation
+;; with p=1, q=1
+;; we end up with a=5 and b=3. So we jumped 2 spots
+
+
+;; if we start with a=2, b=1 and apply transformation
+;; with  p=2 , q=3
+;; we end up with a=8 , b=13. We jumped 4 spots!!
+
+;; if we start with a=2, b=1 and apply transformation
+;; with  p=13 , q=21
+;; we end up with a=55 , b=89. We jumped 8 spots!!!
+
+;; So it can be seen now how this algorithm works. Based on the value
+;; of p and q, we can jump very fast from one fibonacci number to the
+;; another that is much further away in just one transformation
+;; All we need to figure out now is how p and q update themselves.
+
+;; Carefully looking at table below we see that the values of p and q
+;; themselves are fibonnaci numbers and they are jumping up
+;; exactly as if the transformations were applied to themselves!!
+;; So that's the key! Just note with our transformation algorithm,
+;; a,b -> 1,0 and p0,q0 -> 0,1.  So we will need to reverse things in the code
+
+;; p0, q0 -> 0,1      -> fib0 , fib1
+;; p1, q1 -> 1,1      -> fib1 , fib2
+;; p2, q2 -> 2,3      -> fib3 , fib4
+;; p3, q3 -> 13,21    -> fib7 , fib8
+;; p4, q4 -> 610, 987 -> fib15, fib16
+
+;; that is the transformation will bw
+
+
+(defn fib
+  ([n] (fib 1 0 0 1 n))
+  ([a b p q c]
+   (cond (= c 0) b
+         (even? c) (fib a
+                        b
+                        (+ (* p p) (* q q))
+                        (+ (* p q) (* q q) (* q p))
+                        (/ c 2))
+         :else (fib (+ (* b q) (* a q) (* a p))
+                    (+ (* b p) (* a q))
+                    p
+                    q
+                    (dec c)))))
+
+
+;; sicp.ch1.s2> (fib 3)
+;; TRACE t10866: (sicp.ch1.s2/fib 3)
+;; TRACE t10867: | (sicp.ch1.s2/fib 1 0 0 1 3)
+;; TRACE t10868: | | (sicp.ch1.s2/fib 1 1 0 1 2)
+;; TRACE t10869: | | | (sicp.ch1.s2/fib 1 1 1 1 1)
+;; TRACE t10870: | | | | (sicp.ch1.s2/fib 3 2 1 1 0)
+;; TRACE t10870: | | | | => 2
+;; TRACE t10869: | | | => 2
+;; TRACE t10868: | | => 2
+;; TRACE t10867: | => 2
+;; TRACE t10866: => 2
+;; 2
+;; sicp.ch1.s2> (fib 5)
+;; TRACE t10873: (sicp.ch1.s2/fib 5)
+;; TRACE t10874: | (sicp.ch1.s2/fib 1 0 0 1 5)
+;; TRACE t10875: | | (sicp.ch1.s2/fib 1 1 0 1 4)
+;; TRACE t10876: | | | (sicp.ch1.s2/fib 1 1 1 1 2)
+;; TRACE t10877: | | | | (sicp.ch1.s2/fib 1 1 2 3 1)
+;; TRACE t10878: | | | | | (sicp.ch1.s2/fib 8 5 2 3 0)
+;; TRACE t10878: | | | | | => 5
+;; TRACE t10877: | | | | => 5
+;; TRACE t10876: | | | => 5
+;; TRACE t10875: | | => 5
+;; TRACE t10874: | => 5
+;; TRACE t10873: => 5
+;; 5
+;; sicp.ch1.s2> (fib 8)
+;; TRACE t10839: (sicp.ch1.s2/fib 8)
+;; TRACE t10840: | (sicp.ch1.s2/fib 1 0 0 1 8)
+;; TRACE t10841: | | (sicp.ch1.s2/fib 1 0 1 1 4)
+;; TRACE t10842: | | | (sicp.ch1.s2/fib 1 0 2 3 2)
+;; TRACE t10843: | | | | (sicp.ch1.s2/fib 1 0 13 21 1)
+;; TRACE t10844: | | | | | (sicp.ch1.s2/fib 34 21 13 21 0)
+;; TRACE t10844: | | | | | => 21
+;; TRACE t10843: | | | | => 21
+;; TRACE t10842: | | | => 21
+;; TRACE t10841: | | => 21
+;; TRACE t10840: | => 21
+;; TRACE t10839: => 21
+;; 21
+;; sicp.ch1.s2> (fib 13)
+;; TRACE t10847: (sicp.ch1.s2/fib 13)
+;; TRACE t10848: | (sicp.ch1.s2/fib 1 0 0 1 13)
+;; TRACE t10849: | | (sicp.ch1.s2/fib 1 1 0 1 12)
+;; TRACE t10850: | | | (sicp.ch1.s2/fib 1 1 1 1 6)
+;; TRACE t10851: | | | | (sicp.ch1.s2/fib 1 1 2 3 3)
+;; TRACE t10852: | | | | | (sicp.ch1.s2/fib 8 5 2 3 2)
+;; TRACE t10853: | | | | | | (sicp.ch1.s2/fib 8 5 13 21 1)
+;; TRACE t10854: | | | | | | | (sicp.ch1.s2/fib 377 233 13 21 0)
+;; TRACE t10854: | | | | | | | => 233
+;; TRACE t10853: | | | | | | => 233
+;; TRACE t10852: | | | | | => 233
+;; TRACE t10851: | | | | => 233
+;; TRACE t10850: | | | => 233
+;; TRACE t10849: | | => 233
+;; TRACE t10848: | => 233
+;; TRACE t10847: => 233
+;; 233
+;; sicp.ch1.s2> (fib 16)
+;; TRACE t10857: (sicp.ch1.s2/fib 16)
+;; TRACE t10858: | (sicp.ch1.s2/fib 1 0 0 1 16)
+;; TRACE t10859: | | (sicp.ch1.s2/fib 1 0 1 1 8)
+;; TRACE t10860: | | | (sicp.ch1.s2/fib 1 0 2 3 4)
+;; TRACE t10861: | | | | (sicp.ch1.s2/fib 1 0 13 21 2)
+;; TRACE t10862: | | | | | (sicp.ch1.s2/fib 1 0 610 987 1)
+;; TRACE t10863: | | | | | | (sicp.ch1.s2/fib 1597 987 610 987 0)
+;; TRACE t10863: | | | | | | => 987
+;; TRACE t10862: | | | | | => 987
+;; TRACE t10861: | | | | => 987
+;; TRACE t10860: | | | => 987
+;; TRACE t10859: | | => 987
+;; TRACE t10858: | => 987
+;; TRACE t10857: => 987
+;; 987
