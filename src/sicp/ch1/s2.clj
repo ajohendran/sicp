@@ -664,3 +664,58 @@
 ;; TRACE t10858: | => 987
 ;; TRACE t10857: => 987
 ;; 987
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex. 1.20 GCD - Normal order evaluation
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn gcd [a b]
+	(if (= b 0)
+		a
+		(sicp.ch1.s2/gcd b (rem a b))))
+
+;; normal order evaluation
+;;(gcd 206 40)
+
+;;(gcd 40 (rem 206 40)) 
+;; 1 rem evaluation
+;; (rem 206 40) is evaluated
+;; conditionaL evaluates to 6
+
+;;(gcd (rem 206 40) (rem 40 (rem 206 40)))
+;; 2 rem evaluations
+ ;; (rem 206 40) and (rem 40 6) are evaluated
+ ;; conditional evaluates to 4
+
+;;(gcd (rem 40 (rem 206 40)) 
+;;	 (rem (rem 206 40) (rem 40 (rem 206 40))))
+;; 4 rem evaluations
+;; (rem 206 40), (rem 40 6) , (rem 206 40) and (rem 6 4) are performed
+;; conditional evalues to 2
+
+
+;;(gcd (rem (rem 206 40) (rem 40 (rem 206 40))) 
+;;	 (rem (rem 40 (rem 206 40))  (rem (rem 206 40) (rem 40 (rem 206 40)))))
+;; b -> 7 evaluations of rem
+;; (rem 206 40), (rem 40 6) (rem 206 40) , (rem 6 4) , (rem 206 40) , (rem 40 6) , (rem 4 2)
+;; conditional evalues to 0. So parameter 'a' is evaluated
+;; a -> 4 rem operations are performed
+;; (rem 206 40), (rem 40 6) , (rem 206 40) and (rem 6 4) are performed
+;; final answer is 2
+
+;; In total rem is performed 18 times for normal order evaluation of GCD
+;; With applicative order evaluation, rem is called 4 times
+
+
+
+
+
+
+
+
+
+
+
