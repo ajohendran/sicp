@@ -711,11 +711,50 @@
 
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Testing for Primality
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn square [n]
+	(* n n))
+
+(defn find-divisor [n test-divisor]
+	(cond 
+		(> (square test-divisor) n) n
+		(= (rem n test-divisor) 0) test-divisor
+		:else (find-divisor n (inc test-divisor)))
+
+(defn smallest-divisor [n]
+	(find-divisor n 2))
+
+(defn prime? [n]
+	(= (smallest-divisor n) n))
 
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Fermat Test
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn square [n]
+	(* n n))
 
 
+;; As described in footnote
+;; a*b mod n = [a mod n * b mod n] mod n 
+;; Also use the property b^x mod n = [b * ((b^x-1) mod n)] mod n
+;; Advantage is that we are always dealing with numbers not much larger than m
+(defn expmod [base exp m]
+	(cond 
+		(= exp 1) base
+		(even? exp) (rem (square (expmod base (/ exp 2) m)) m)
+		:else (rem (* base (expmod base (dec exp) m)) m)))
 
+(defn fast-expt-i [b n a]
+  (cond (< n 1) a
+        (even? n) (fast-expt-i (* b b) (/ n 2) a)
+        :else (fast-expt-i b (dec n) (* a b))))
+
+(defn expmod2 [base exp m]
+	(rem (fast-expt-i base exp 1) m))
 
 
