@@ -673,9 +673,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn gcd [a b]
-	(if (= b 0)
-		a
-		(sicp.ch1.s2/gcd b (rem a b))))
+  (if (= b 0)
+    a
+    (sicp.ch1.s2/gcd b (rem a b))))
 
 ;; normal order evaluation
 ;;(gcd 206 40)
@@ -690,15 +690,15 @@
  ;; (rem 206 40) and (rem 40 6) are evaluated
  ;; conditional evaluates to 4
 
-;;(gcd (rem 40 (rem 206 40)) 
-;;	 (rem (rem 206 40) (rem 40 (rem 206 40))))
+;;(gcd (rem 40 (rem 206 40)) (rem (rem 206 40) (rem 40 (rem 206 40))))
 ;; 4 rem evaluations
 ;; (rem 206 40), (rem 40 6) , (rem 206 40) and (rem 6 4) are performed
 ;; conditional evalues to 2
 
 
-;;(gcd (rem (rem 206 40) (rem 40 (rem 206 40))) 
-;;	 (rem (rem 40 (rem 206 40))  (rem (rem 206 40) (rem 40 (rem 206 40)))))
+;;(gcd
+;;   (rem (rem 206 40) (rem 40 (rem 206 40))) 
+;;   (rem (rem 40 (rem 206 40))  (rem (rem 206 40) (rem 40 (rem 206 40)))))
 ;; b -> 7 evaluations of rem
 ;; (rem 206 40), (rem 40 6) (rem 206 40) , (rem 6 4) , (rem 206 40) , (rem 40 6) , (rem 4 2)
 ;; conditional evalues to 0. So parameter 'a' is evaluated
@@ -715,19 +715,19 @@
 ;;; Testing for Primality
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn square [n]
-	(* n n))
+  (* n n))
 
 (defn find-divisor [n test-divisor]
-	(cond 
-		(> (square test-divisor) n) n
-		(= (rem n test-divisor) 0) test-divisor
-		:else (find-divisor n (inc test-divisor)))
+  (cond 
+    (> (square test-divisor) n) n
+    (= (rem n test-divisor) 0) test-divisor
+    :else (recur n (inc test-divisor))))
 
 (defn smallest-divisor [n]
-	(find-divisor n 2))
+  (find-divisor n 2))
 
 (defn prime? [n]
-	(= (smallest-divisor n) n))
+  (= (smallest-divisor n) n))
 
 
 
@@ -736,7 +736,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn square [n]
-	(* n n))
+  (* n n))
 
 
 ;; As described in footnote
@@ -744,10 +744,10 @@
 ;; Also use the property b^x mod n = [b * ((b^x-1) mod n)] mod n
 ;; Advantage is that we are always dealing with numbers not much larger than m
 (defn expmod [base exp m]
-	(cond 
-		(= exp 1) base
-		(even? exp) (rem (square (expmod base (/ exp 2) m)) m)
-		:else (rem (* base (expmod base (dec exp) m)) m)))
+  (cond 
+    (= exp 1) base
+    (even? exp) (rem (square (expmod base (/ exp 2) m)) m)
+    :else (rem (* base (expmod base (dec exp) m)) m)))
 
 (defn fast-expt-i [b n a]
   (cond (< n 1) a
@@ -755,6 +755,730 @@
         :else (fast-expt-i b (dec n) (* a b))))
 
 (defn expmod2 [base exp m]
-	(rem (fast-expt-i base exp 1) m))
+  (rem (fast-expt-i base exp 1) m))
+
+(defn fermat-test [n]
+  (defn try-it [a]
+    (= (expmod a n n) a))
+  (try-it (inc (rand-int (dec n)))))
+
+
+(defn fast-prime? [n times]
+  (cond
+    (= times 0) true
+    (fermat-test n) (fast-prime? n (dec times))
+    :else false))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Experimenting with Fermat Test
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Trying to understand why Fermat test is a probabilistic algorithm
+;; OK, carmichael numbers fool the test
+;; However, probabilistic means [a^n mod n] will equal a for a non prime number
+;; n at some point. Trying to find an example
+
+;; There are a dozen different ways to write the following in clojure
+;; Sticking to simplest procedure definitions consistent with SICP so far
+;; So avoiding do block, when statement, logical operators, HOFs and so on
+
+(defn expmod-test-helper [n a]
+  (if (= (expmod a n n) a)
+    (print a " "))
+  (if (>= a n)
+    (println)
+    (recur n (inc a))))
+  
+(defn expmod-test [start end]
+  (if (<= start end)
+    (println "Testing for : " start))
+  (if (<= start end)
+    (expmod-test-helper start 2))
+  (if (<= start end)
+    (recur (inc start) end)))
+
+
+;; sicp.ch1.s2> (expmod-test 2 20)
+;; Testing for :  2
+
+;; Testing for :  3
+;; 2  
+;; Testing for :  4
+
+;; Testing for :  5
+;; 2  3  4  
+;; Testing for :  6
+;; 3  4  
+;; Testing for :  7
+;; 2  3  4  5  6  
+;; Testing for :  8
+
+;; Testing for :  9
+;; 8  
+;; Testing for :  10
+;; 5  6  
+;; Testing for :  11
+;; 2  3  4  5  6  7  8  9  10  
+;; Testing for :  12
+;; 4  9  
+;; Testing for :  13
+;; 2  3  4  5  6  7  8  9  10  11  12  
+;; Testing for :  14
+;; 7  8  
+;; Testing for :  15
+;; 4  5  6  9  10  11  14  
+;; Testing for :  16
+
+;; Testing for :  17
+;; 2  3  4  5  6  7  8  9  10  11  12  13  14  15  16  
+;; Testing for :  18
+;; 9  10  
+;; Testing for :  19
+;; 2  3  4  5  6  7  8  9  10  11  12  13  14  15  16  17  18  
+;; Testing for :  20
+;; 5  16  
+
+
+;; Fermat test is quite leaky. Take 15, for instance. There are 7 integers smaller than 15
+;; for which the fermat test will pass!
+
+;; sicp.ch1.s2> (repeatedly 20 #(fast-prime? 15 1))
+;; (true false false true true false true true true true false false true true false true false true true false)
+;; sicp.ch1.s2> (repeatedly 20 #(fast-prime? 15 2))
+;; (false true true true false false false false false false true true false false false false false false false true)
+;; sicp.ch1.s2> (repeatedly 20 #(fast-prime? 15 3))
+;; (false true false false false false false false true false false false true false true false false false false false)
+;; sicp.ch1.s2> (repeatedly 20 #(fast-prime? 15 4))
+;; (false false false true false false false false false false false false true false false false false false true false)
+;; sicp.ch1.s2> (repeatedly 20 #(fast-prime? 15 5))
+;; (false false false false false false false false false false false false false false false false false false false false)
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex. 1.21 Smallest Divisor for 199,1999,19999
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;(smallest-divisor 199)
+;; 199
+
+;;(smallest-divisor 1999)
+;; 1999
+
+;;(smallest-divisor 19999)
+;; 7
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex. 1.22 Timed Prime Test
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; modified the procedures from book to print out only prime numbers
+(defn report-prime [n elapsed-time]
+  (newline)
+  (print n)
+  (print " *** ")
+  (print elapsed-time))
+
+(defn start-prime-test [n start-time]
+  (if (prime? n)
+    (report-prime n (- (System/currentTimeMillis) start-time))))
+
+(defn timed-prime-test [n]
+  (start-prime-test n (System/currentTimeMillis)))
+
+(defn search-for-primes-helper [start end]
+  (if (<= start end)
+    (timed-prime-test start))
+  (if (<= start end)
+    (search-for-primes-helper (+ 2 start) end)))
+
+(defn search-for-primes [start end]
+  (if (even? start)
+    (search-for-primes-helper (inc start) end)
+    (search-for-primes-helper start end)))
+
+
+;; sicp.ch1.s2> (search-for-primes 1000 1020)
+
+;; 1009 *** 0
+;; 1013 *** 0
+;; 1019 *** 0
+;; nil
+;; sicp.ch1.s2> (search-for-primes 10000 10040)
+
+;; 10007 *** 0
+;; 10009 *** 0
+;; 10037 *** 0
+;; 10039 *** 0
+;; nil
+;; sicp.ch1.s2> (search-for-primes 100000 100050)
+
+;; 100003 *** 0
+;; 100019 *** 0
+;; 100043 *** 0
+;; 100049 *** 0
+;; nil
+;; sicp.ch1.s2> (search-for-primes 1000000 1000050)
+
+;; 1000003 *** 0
+;; 1000033 *** 0
+;; 1000037 *** 0
+;; 1000039 *** 0
+;; nil
+;; sicp.ch1.s2> (search-for-primes 10000000 10000200)
+
+;; 10000019 *** 1 
+;; 10000079 *** 1
+;; 10000103 *** 1
+;; 10000121 *** 0
+;; 10000139 *** 1
+;; 10000141 *** 1
+;; 10000169 *** 1
+;; 10000189 *** 0
+;; nil
+;; sicp.ch1.s2> (search-for-primes 100000000 100000200)
+
+;; 100000007 *** 2
+;; 100000037 *** 2
+;; 100000039 *** 2
+;; 100000049 *** 3
+;; 100000073 *** 1
+;; 100000081 *** 2
+;; 100000123 *** 2
+;; 100000127 *** 2
+;; 100000193 *** 2
+;; nil
+;; sicp.ch1.s2> (search-for-primes 1000000000 1000000200)
+
+;; 1000000007 *** 8
+;; 1000000009 *** 5
+;; 1000000021 *** 7
+;; 1000000033 *** 5
+;; 1000000087 *** 6
+;; 1000000093 *** 5
+;; 1000000097 *** 5
+;; 1000000103 *** 6
+;; 1000000123 *** 5
+;; 1000000181 *** 5
+;; nil
+;; sicp.ch1.s2> (search-for-primes 10000000000 10000000200)
+
+;; 10000000019 *** 17
+;; 10000000033 *** 17
+;; 10000000061 *** 15
+;; 10000000069 *** 15
+;; 10000000097 *** 16
+;; 10000000103 *** 17
+;; 10000000121 *** 15
+;; 10000000141 *** 15
+;; 10000000147 *** 15
+;; nil
+;; sicp.ch1.s2> (search-for-primes 100000000000 100000000200)
+
+;; 100000000003 *** 56
+;; 100000000019 *** 52
+;; 100000000057 *** 52
+;; 100000000063 *** 51
+;; 100000000069 *** 54
+;; 100000000073 *** 54
+;; 100000000091 *** 53
+;; 100000000103 *** 52
+;; 100000000129 *** 55
+;; 100000000171 *** 47
+;; 100000000183 *** 50
+;; 100000000193 *** 48
+;; nil
+;; sicp.ch1.s2> (search-for-primes 1000000000000 1000000000200)
+
+;; 1000000000039 *** 172
+;; 1000000000061 *** 165
+;; 1000000000063 *** 173
+;; 1000000000091 *** 161
+;; 1000000000121 *** 175
+;; 1000000000163 *** 173
+;; 1000000000169 *** 159
+;; 1000000000177 *** 168
+;; 1000000000189 *** 162
+;; 1000000000193 *** 166
+;; ni
+;; sicp.ch1.s2> (search-for-primes 10000000000000 10000000000200)
+;; 10000000000037 *** 535
+;; 10000000000051 *** 541
+;; 10000000000099 *** 530
+;; 10000000000129 *** 547
+;; 10000000000183 *** 523
+;; nil
+;; sicp.ch1.s2> (search-for-primes 100000000000000 100000000000200)
+
+;; 100000000000031 *** 1708
+;; 100000000000067 *** 1702
+;; 100000000000097 *** 1671
+;; 100000000000099 *** 1656
+;; 100000000000133 *** 1666
+;; 100000000000139 *** 1654
+;; 100000000000169 *** 1645
+;; 100000000000183 *** 1655
+;; nil
+;; sicp.ch1.s2> (search-for-primes 1000000000000000 1000000000000100)
+
+;; 1000000000000037 *** 5406
+;; 1000000000000091 *** 5291
+;; nil
+
+;; OK, doing this exercise in clojure raises several issues.
+;; 1) JIT compilation on JVM means the numbers are't exactly consistent between runs
+;; 2) Java upto version 8 only has accuracy upto milliseconds.
+;; Though nano precision is available, accurancy isn't guaranteed
+;; 3) On modern computers, computing upto 1000000 takes less than a millisecond.
+;; So using much larger numbers for analysis
+;; 4) Because of inconsistency in time for even neighboring numbers, have to pick
+;; the modal time value or largest time value in each range for analysis
+
+;; Analysis by picking some numbers from results
+
+;; 10000019 *** 1 ;; sqrt -> 3162
+;; 1000000087 *** 6 ;; sqrt -> 31623
+;; 100000000003 *** 56 ;; sqrt -> 316228
+;; 10000000000129 *** 547 ;; sqrt -> 3162278
+;; 1000000000000037 *** 5406 ;; sqrt -> 31622776
+
+;; 100000007 *** 2 ;; sqrt -> 10000
+;; 10000000019 *** 17 ;; sqrt -> 100000
+;; 1000000000121 *** 175 ;; sqrt -> 1000000
+;; 100000000000031 *** 1708 ;; sqrt -> 10000000
+
+;; Q1) you should expect that testing for primes around 10,000 should take about (sqrt 10)
+;; times as long as testing for primes around 1000. Do your timing data bear this out?
+;; A1) Instead of 10,000 and 1000, we will pick 10000000000129 and 1000000000121.
+;; Former takes 547ms and the latter 175ms. (/ 3162278 175.0) is 3.13.  (sqrt 10) is 3.16.
+;; The numbers almost perfectly agree.
+;; Comparing 1000000000121 and 100000000000031, the ratio is 100.
+;; The procedure should tale 10 times as much for the bigger prime and the actual results agree.
+;; So the answer to this question is yes for relatively larger primes.
+;; For smaller primes, the ratio isn't that accurate but still quite close to expected
+
+;; Q2) How well do the data for 100,000 and 1,000,000 support the (sqrt n) prediction?
+;; A2) For larger primes, the result is quite consistent with the (sqrt n) prediction
+
+;; Q3) Is your result compatible with the notion that programs on your machine run in
+;; time proportional to the number of steps required for the computation?
+;; A3) Yes, to quite a remarkable degree
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex. 1.23 More Efficient Smallest Divisor
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defn next-divisor [test-divisor]
+  (if (= test-divisor 2)
+    3
+    (+ 2 test-divisor)))
+
+
+(defn find-divisor [n test-divisor]
+  (cond 
+    (> (square test-divisor) n) n
+    (= (rem n test-divisor) 0) test-divisor
+    :else (recur n (next-divisor test-divisor))))
+
+
+;; incrementing by one
+;;(timed-prime-test 10000019) ;; 1 
+;;(timed-prime-test 1000000087) ;; 6 
+;;(timed-prime-test 100000000003) ;; 53
+;;(timed-prime-test 10000000000129) ;; 507
+;;(timed-prime-test 1000000000000037) ;; 5001
+
+;;(timed-prime-test 100000007) ;; 2
+;;(timed-prime-test 10000000019) ;; 18
+;;(timed-prime-test 1000000000121) ;; 163
+;;(timed-prime-test 100000000000031) ;; 1589
+
+
+;; incrementing by 2
+;;(timed-prime-test 10000019) ;; 1 ;; ratio -> 1
+;;(timed-prime-test 1000000087) ;; 4 ;; ratio -> 1.5
+;;(timed-prime-test 100000000003) ;; 39 ;; ratio -> 1.36
+;;(timed-prime-test 10000000000129) ;; 342 ;; ratio -> 1.48
+;;(timed-prime-test 1000000000000037) ;; 3359 ;; ratio -> 1.49
+
+;;(timed-prime-test 100000007) ;;2 ;; ratio -> 1
+;;(timed-prime-test 10000000019) ;; 12 ;; ratio -> 1.5
+;;(timed-prime-test 1000000000121) ;; 120  ;; ratio -> 1.36
+;;(timed-prime-test 100000000000031);; 1126 ;; ratio -> 1.41
+
+
+;; Q1) Since this modification halves the number of test steps,
+;; you should expect it to run about twice as fast. Is this expectation confirmed?
+;; A1) No
+
+;; Q2) If not, what is the observed ratio of the speeds of the two algorithms
+;; A2) Observed ratio is close to 1.4
+
+;; Q3) how do you explain the fact that it is different from 2?
+;; A3) Difference in speed by a factor of 1.35 between inc and next-divisor
+;; See below
+
+
+;; sicp.ch1.s2> (time (next-divisor 1000000))
+;; "Elapsed time: 0.10766 msecs"
+;; 1000002
+;; sicp.ch1.s2> (time (next-divisor 1000000))
+;; "Elapsed time: 0.111335 msecs"
+;; 1000002
+;; sicp.ch1.s2> (time (next-divisor 1000000))
+;; "Elapsed time: 0.108775 msecs"
+;; 1000002
+;; sicp.ch1.s2> (time (next-divisor 1000000))
+;; "Elapsed time: 0.11509 msecs"
+;; 1000002
+;; sicp.ch1.s2> (time (inc 1000000))
+;; "Elapsed time: 0.08713 msecs"
+;; 1000001
+;; sicp.ch1.s2> (time (inc 1000000))
+;; "Elapsed time: 0.0793 msecs"
+;; 1000001
+;; sicp.ch1.s2> (time (inc 1000000))
+;; "Elapsed time: 0.081625 msecs"
+;; 1000001
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex. 1.24 Timed Test with Fast Frime
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; 2 major changes - using nanoTime because algorithm is really fast
+;; and BIGINT to handle squaring of large long type numbers
+
+(defn square [n]
+   (* n n))
+
+;; USING BIGINT
+(defn expmod-bigint [base exp m]
+  (cond 
+    (= exp 1) base
+    (even? exp) (rem (square (bigint (expmod-bigint base (/ exp 2) m))) m)
+    :else (rem (* base (expmod-bigint base (dec exp) m)) m)))
+
+(defn fermat-test [n]
+  (defn try-it [a]
+    (= (expmod-bigint a n n) a))
+  (try-it (inc
+           (.nextLong (java.util.concurrent.ThreadLocalRandom/current) (dec n)))))
+
+(defn start-prime-test [n start-time]
+  (if (fast-prime? n 20)
+    (report-prime n (- (System/nanoTime) start-time))))
+
+(defn timed-prime-test [n]
+  (start-prime-test n (System/nanoTime)))
+
+;; (timed-prime-test 1019) ;; 127967
+;; (timed-prime-test 10037);; 150975
+;; (timed-prime-test 100043);; 178028
+;; (timed-prime-test 1000037);; 196310
+;; (timed-prime-test 10000019) ;; 235928
+;; (timed-prime-test 100000007) ;; 264233
+;; (timed-prime-test 1000000087) ;; 306367
+;; (timed-prime-test 10000000019) ;; 595261
+;; (timed-prime-test 100000000003) ;; 820854
+;; (timed-prime-test 1000000000121) ;; 902351
+;; (timed-prime-test 10000000000129) ;; 941385
+;; (timed-prime-test 100000000000031) ;; 1104555
+;; (timed-prime-test 1000000000000037) ;; 1152927
+;; (timed-prime-test 10000000000000061) ;; 1227878
+
+;; sicp.ch1.s2> (Math/log 1000000000000037)
+;; 34.53877639491072
+;; sicp.ch1.s2> (Math/log 10000019)
+;; 16.118097550956517
+;; sicp.ch1.s2> (/ 820854 235928.0)
+;; 3.4792563833033805
+;; sicp.ch1.s2> (/ 1152927 235928.0)
+;; 4.886774778746058
+;; sicp.ch1.s2> 
+
+
+;; Bewteen 1000000000000037 and 10000019 ,
+;; the ratio in log of values is roughly 2.15
+;; However the ratio in time is roughly 4.8
+
+;; Bewteen 10000019 and 1019 ,
+;; the ratio in log of values is roughly 2.32
+;; However the ratio in time is roughly 1.84
+
+
+;; The discrepancy could by caused by
+;; a) the fact that nonoTime accuracy is not guaranteed
+;; b) squaring , bigint function and rem are not constant time operations
+;; They depend on the size of the number
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex. 1.25 Alyssa P. Hacker's shortcut
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn expmod2 [base exp m]
+  (rem (fast-expt-i base exp 1) m))
+
+;; When base and exp are large numbers, performing the actual exponentiation
+;; would produce a ridiculously huge number
+;; Using modular arithmetic identities will mean
+;; the worst mathematical operation performed is squaring of a number
+;; that is not much larger than the base
+;; So by using modular arithmetic, we have avoided time-consuming unecessary
+;; multiplications and , for large numbers, made the impossible possible
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex. 1.26 Louis Reasoner's mistake - O(log n) vs O(n)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn expmod3 [base exp m]
+  (cond 
+    (= exp 0) 1
+    (even? exp) (rem (* (expmod3 base (/ exp 2) m)
+                        (expmod3 base (/ exp 2) m))
+                      m)
+    :else (rem (* base (expmod3 base (dec exp) m)) m)))
+
+
+;; sicp.ch1.s2> (expmod3 5 8 8)
+;; TRACE t12740: (sicp.ch1.s2/expmod3 5 8 8)
+;; TRACE t12741: | (sicp.ch1.s2/expmod3 5 4 8)
+;; TRACE t12742: | | (sicp.ch1.s2/expmod3 5 2 8)
+;; TRACE t12743: | | | (sicp.ch1.s2/expmod3 5 1 8)
+;; TRACE t12744: | | | | (sicp.ch1.s2/expmod3 5 0 8)
+;; TRACE t12744: | | | | => 1
+;; TRACE t12743: | | | => 5
+;; TRACE t12745: | | | (sicp.ch1.s2/expmod3 5 1 8)
+;; TRACE t12746: | | | | (sicp.ch1.s2/expmod3 5 0 8)
+;; TRACE t12746: | | | | => 1
+;; TRACE t12745: | | | => 5
+;; TRACE t12742: | | => 1
+;; TRACE t12747: | | (sicp.ch1.s2/expmod3 5 2 8)
+;; TRACE t12748: | | | (sicp.ch1.s2/expmod3 5 1 8)
+;; TRACE t12749: | | | | (sicp.ch1.s2/expmod3 5 0 8)
+;; TRACE t12749: | | | | => 1
+;; TRACE t12748: | | | => 5
+;; TRACE t12750: | | | (sicp.ch1.s2/expmod3 5 1 8)
+;; TRACE t12751: | | | | (sicp.ch1.s2/expmod3 5 0 8)
+;; TRACE t12751: | | | | => 1
+;; TRACE t12750: | | | => 5
+;; TRACE t12747: | | => 1
+;; TRACE t12741: | => 1
+;; TRACE t12752: | (sicp.ch1.s2/expmod3 5 4 8)
+;; TRACE t12753: | | (sicp.ch1.s2/expmod3 5 2 8)
+;; TRACE t12754: | | | (sicp.ch1.s2/expmod3 5 1 8)
+;; TRACE t12755: | | | | (sicp.ch1.s2/expmod3 5 0 8)
+;; TRACE t12755: | | | | => 1
+;; TRACE t12754: | | | => 5
+;; TRACE t12756: | | | (sicp.ch1.s2/expmod3 5 1 8)
+;; TRACE t12757: | | | | (sicp.ch1.s2/expmod3 5 0 8)
+;; TRACE t12757: | | | | => 1
+;; TRACE t12756: | | | => 5
+;; TRACE t12753: | | => 1
+;; TRACE t12758: | | (sicp.ch1.s2/expmod3 5 2 8)
+;; TRACE t12759: | | | (sicp.ch1.s2/expmod3 5 1 8)
+;; TRACE t12760: | | | | (sicp.ch1.s2/expmod3 5 0 8)
+;; TRACE t12760: | | | | => 1
+;; TRACE t12759: | | | => 5
+;; TRACE t12761: | | | (sicp.ch1.s2/expmod3 5 1 8)
+;; TRACE t12762: | | | | (sicp.ch1.s2/expmod3 5 0 8)
+;; TRACE t12762: | | | | => 1
+;; TRACE t12761: | | | => 5
+;; TRACE t12758: | | => 1
+;; TRACE t12752: | => 1
+;; TRACE t12740: => 1
+;; 1
+
+
+;; If a is an integer such that 2^a is the closest number to exp
+;; that is less than exp,
+
+;; With the fast algorithm, the number of steps is a+(exp-2^a).
+;; For sufficiently large values of exp, we can assume exp=2^a.
+;; The number of steps is 'a' which is log(exp) or O(log n).
+
+;; With the slow algorithm, the number of multiplications is exactly
+;; 2^(a+1) - 1 + (exp-2^a). For sufficiently large values of n,
+;; no. of steps = (2*exp)-1. This is O(n)
+
+;; How did we arrive at the formula (2*2^a)-1+ (exp-2^a) ?
+;; Let us assume exp = 2^a.
+;; One multiplication is performed per function call
+;; First call is made with exp initially to be 2^a.
+;; Two calls are made with exp parameter value  (2^a)/2
+;; Four multiplications with exp parameter (2^a)/4
+;; ..... and so on until exp parameter is one
+;; So, number of multiplications is 1+2+4+8+....2^a
+;; 2^0 + 2^1 + 2^2 + 2^3 + ...... + 2^a
+;; This is a geometric sequence with value (1-2^(a+1))/(1-2) or 2^(a+1)-1
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex. 1.27 Carmichael numbers
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;Carmichael numbers -> 561, 1105, 1729, 2465, 2821, and 6601
+
+;; return 0 for success or value of a when failed
+(defn carmichael-test [a n]
+  (if (< a n)
+    (if (= (expmod a n n) a)
+      (recur (inc a) n)
+      a)
+    0))
+
+;; sicp.ch1.s2> (carmichael-test 2 561)
+;; 0
+;; sicp.ch1.s2> (carmichael-test 2 1105)
+;; 0
+;; sicp.ch1.s2> (carmichael-test 2 1729)
+;; 0
+;; sicp.ch1.s2> (carmichael-test 2 2465)
+;; 0
+;; sicp.ch1.s2> (carmichael-test 2 2821)
+;; 0
+;; sicp.ch1.s2> (carmichael-test 2 6601)
+;; 0
+
+
+;; sicp.ch1.s2> (map #(fast-prime? % 100) [561 1105 1729 2465 2821 6601])
+;; (true true true true true true)
+;; sicp.ch1.s2> (map prime? [561 1105 1729 2465 2821 6601])
+;; (false false false false false false)
+;; sicp.ch1.s2> (map #(carmichael-test 2 %) [561 1105 1729 2465 2821 6601])
+;; (0 0 0 0 0 0)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex. 1.28 Miller-Rabin Test
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn square [n]
+  (* n n))
+
+(defn check-non-trivial-sqrt [result m]
+  (cond
+    (= result (dec m)) (rem (square result) m)
+    (= result 1) (rem (square result) m)
+    (= (rem (square result) m) 1) 0
+    :else (rem (square result) m)))
+
+(defn expmod-mr [base exp m]
+  (cond 
+    (= exp 1) base
+    (even? exp) (check-non-trivial-sqrt
+                 (expmod-mr base (/ exp 2) m)
+                 m)
+    :else (rem (* base (expmod-mr base (dec exp) m)) m)))
+
+
+(defn miller-rabin-test [n]
+  (defn try-it [a]
+    (= (expmod-mr a (dec n) n) 1))
+  (try-it (inc (rand-int (dec n)))))
+
+
+(defn fast-prime-mr? [n times]
+  (cond
+    (= times 0) true
+    (miller-rabin-test n) (fast-prime-mr? n (dec times))
+    :else false))
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;  Experimenting with Miller-Rabin test
+;;;   ---- Looking for false positives ----
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;; Miller-Rabin test seems much much more robust than Fermat test
+;; Let's see for how many non prime numbers below 27, false positives show up
+
+
+;;NOTE using expmod-mr here,  whixh is modified for miller-rabin test
+(defn expmod-mr-test-helper [n a]
+  (if (= (expmod-mr a (dec n) n) 1)
+    (print a " "))
+  (if (>= a n)
+    (println)
+    (recur n (inc a))))
+
+  
+(defn expmod-mr-test [start end]
+  (if (<= start end)
+    (println "Testing for : " start))
+  (if (<= start end)
+    (expmod-mr-test-helper start 2))
+  (if (<= start end)
+    (recur (inc start) end)))
+
+
+;; sicp.ch1.s2> (expmod-mr-test 2 26)
+;; Testing for :  2
+
+;; Testing for :  3
+;; 2  
+;; Testing for :  4
+
+;; Testing for :  5
+;; 2  3  4  
+;; Testing for :  6
+
+;; Testing for :  7
+;; 2  3  4  5  6  
+;; Testing for :  8
+
+;; Testing for :  9
+;; 8  
+;; Testing for :  10
+
+;; Testing for :  11
+;; 2  3  4  5  6  7  8  9  10  
+;; Testing for :  12
+
+;; Testing for :  13
+;; 2  3  4  5  6  7  8  9  10  11  12  
+;; Testing for :  14
+
+;; Testing for :  15
+;; 14  
+;; Testing for :  16
+
+;; Testing for :  17
+;; 2  3  4  5  6  7  8  9  10  11  12  13  14  15  16  
+;; Testing for :  18
+
+;; Testing for :  19
+;; 2  3  4  5  6  7  8  9  10  11  12  13  14  15  16  17  18  
+;; Testing for :  20
+
+;; Testing for :  21
+;; 20  
+;; Testing for :  22
+
+;; Testing for :  23
+;; 2  3  4  5  6  7  8  9  10  11  12  13  14  15  16  17  18  19  20  21  22  
+;; Testing for :  24
+
+;; Testing for :  25
+;; 7  18  24  
+;; Testing for :  26
+
+;; nil
+
+
+;; Not bad. Much less leaky than Fermat test
 
 
