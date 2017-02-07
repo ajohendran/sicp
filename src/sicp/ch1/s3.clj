@@ -5,67 +5,29 @@
 ;;; 1.3 Procedures as Arguments
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn exp [x n]
-  (loop [acc 1 n n]
-    (if (zero? n) acc
-        (recur (* x acc) (dec n)))))
+(defn cube [x] (* x x x))
 
-
-(defn sum-integers [a b sum]
+(defn sum [term a next b]
   (if (> a b)
-    sum
-    (sum-integers (inc a) b (+ sum a))))
-
-(defn sum-cubes [a b sum]
-  (if (> a b)
-    sum
-    (sum-cubes (inc a) b (+ sum (exp a 3)))))
-
-(defn sum-integers [a b]
-  (loop [acc 0
-        a a]
-    (if (> a b)
-      acc
-      (recur (+ acc a) (inc a) b))))
+    0
+    (+ (term a) (sum term (next a) next b))))
 
 (defn sum-cubes [a b]
-  (loop [acc 0
-        a a]
-    (if (> a b)
-      acc
-      (recur (+ acc (exp a 3)) (inc a) b))))
-
-(defn pi-sum [a b]
-  (loop [acc 0
-        a a]
-    (if (> a b)
-      acc
-      (recur (+ acc (/ 1 (* a (+ a 2)))) (+ a 4) b))))
-
-(defn sum [term a nxt b]
-  (loop [acc 0
-        a a]
-    (if (> a b)
-      acc
-      (recur (+ acc (term a)) (nxt a)))))
-
-(defn cube [n]
-  (* n n n))
-
+  (sum cube a inc b))
 
 (defn sum-integers [a b]
   (sum identity a inc b))
 
-(defn sum-cubes [a b]
- (sum cube a inc b))
-
-;; (sum (fn [x] (/ 1 (* x (+ x 2)))) 1 (fn [x] (+ x 4)) 5)
-;; (sum cube 1 inc 3)
+(defn pi-sum [a b]
+  (defn pi-term [x]
+    (/ 1.0 (* x (+ 2 x))))
+  (defn pi-next [x]
+    (+ x 4))
+  (* 8 (sum pi-term a pi-next b)))
 
 (defn integral [f a b dx]
-  (letfn [(add-dx [x] (+ x dx))]
-    (* (sum f (+ a (/ dx 2.0)) add-dx b)
-       dx)))
+  (defn add-dx [x] (+ x dx))
+  (* dx (sum f (+ a (/ dx 2)) add-dx b)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
