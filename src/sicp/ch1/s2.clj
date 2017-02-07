@@ -571,7 +571,7 @@
 ;; p3, q3 -> 13,21    -> fib7 , fib8
 ;; p4, q4 -> 610, 987 -> fib15, fib16
 
-;; that is the transformation will bw
+;; that is the transformation will be
 
 
 (defn fib
@@ -749,14 +749,6 @@
     (even? exp) (rem (square (expmod base (/ exp 2) m)) m)
     :else (rem (* base (expmod base (dec exp) m)) m)))
 
-(defn fast-expt-i [b n a]
-  (cond (< n 1) a
-        (even? n) (fast-expt-i (* b b) (/ n 2) a)
-        :else (fast-expt-i b (dec n) (* a b))))
-
-(defn expmod2 [base exp m]
-  (rem (fast-expt-i base exp 1) m))
-
 (defn fermat-test [n]
   (defn try-it [a]
     (= (expmod a n n) a))
@@ -781,7 +773,7 @@
 
 ;; There are a dozen different ways to write the following in clojure
 ;; Sticking to simplest procedure definitions consistent with SICP so far
-;; So avoiding do block, when statement, logical operators, HOFs and so on
+;; So avoiding do block, when statement, let statement, HOFs and so on
 
 (defn expmod-test-helper [n a]
   (if (= (expmod a n n) a)
@@ -1072,19 +1064,38 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex. 1.23 More Efficient Smallest Divisor
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+(defn square [n]
+  (* n n))
 
 (defn next-divisor [test-divisor]
   (if (= test-divisor 2)
     3
     (+ 2 test-divisor)))
 
-
 (defn find-divisor [n test-divisor]
   (cond 
     (> (square test-divisor) n) n
     (= (rem n test-divisor) 0) test-divisor
     :else (recur n (next-divisor test-divisor))))
+
+(defn smallest-divisor [n]
+  (find-divisor n 2))
+  
+(defn prime? [n]
+  (= (smallest-divisor n) n))
+  
+  ;; modified the procedures from book to print out only prime numbers
+(defn report-prime [n elapsed-time]
+  (newline)
+  (print n)
+  (print " *** ")
+  (print elapsed-time))
+
+(defn start-prime-test [n start-time]
+  (if (prime? n)
+    (report-prime n (- (System/currentTimeMillis) start-time))))
+
+(defn timed-prime-test [n]
 
 
 ;; incrementing by one
@@ -1364,14 +1375,31 @@
 ;;; Ex. 1.28 Miller-Rabin Test
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; poorly worded exercise problem. Took a multiple re-readings and
+;; learning from web to understand how miller-rabin is supposed to work
+
+;; The trick is determining if we have come across a number whose square modulo n
+;; results in 1. '1 modulo n' and 'n-1 modulo n' would fit this bill however they are 
+;; considered trivial square roots and so we look for other numbers.
+;; For example (expmod 8 20 21) would recurse to (expmod 8 1 21) which produces 8
+;; Now 8 is neither 1 nor 20. Yet (rem (* 8 8) 21) produces 1. 
+;; Once we encounter this, we can signal by returning 0 which will get propogated
+;; through the recursive calls
+;; Once we encounter something like (expmod 8 1 21), '1' gets propogated out as result
+;; We break this reasult of 1 being returned by instead signaling 0.
+
+
+
 (defn square [n]
   (* n n))
 
+;; could be made a tad bit more efficient by introducing another function.
+;; for purposes of illustration and for maintaining clarity, leaving as is
 (defn check-non-trivial-sqrt [result m]
   (cond
     (= result (dec m)) (rem (square result) m)
     (= result 1) (rem (square result) m)
-    (= (rem (square result) m) 1) 0
+    (= (rem (square result) m) 1) 0 
     :else (rem (square result) m)))
 
 (defn expmod-mr [base exp m]
@@ -1395,7 +1423,17 @@
     (miller-rabin-test n) (fast-prime-mr? n (dec times))
     :else false))
 
-
+;; Feeling lazy, so will just use HOFs to test whether fast-prime-mr? works.
+;; Seems to work as expected.
+;;(filter #(fast-prime-mr? % 20) (range 10000000 10000200))
+;;(10000019
+;; 10000079
+;; 10000103
+;; 10000121
+;; 10000139
+;; 10000141
+;; 10000169
+;; 10000189)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;  Experimenting with Miller-Rabin test
@@ -1478,7 +1516,23 @@
 
 ;; nil
 
-
+;;;;
 ;; Not bad. Much less leaky than Fermat test
+;;;;
 
 
+;; Miller-Rabis test is not fooled by the provided carmichael numbers
+;; (map #(fast-prime-mr? % 100) [561 1105 1729 2465 2821 6601])
+;; (false false false false false false)
+
+
+;; failure occurs fairly early for carmichael numbers
+ (defn carmichael-test-mr [a n]
+  (if (< a n)
+    (if (= (expmod-mr a (dec n) n) 1)
+      (recur (inc a) n)
+      a)
+    0))
+
+;; (map #(carmichael-test-mr 2 %) [561 1105 1729 2465 2821 6601])
+;; (2 2 2 2 2 2)
