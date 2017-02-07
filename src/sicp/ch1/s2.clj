@@ -1096,6 +1096,7 @@
     (report-prime n (- (System/currentTimeMillis) start-time))))
 
 (defn timed-prime-test [n]
+  (start-prime-test n (System/nanoTime)))
 
 
 ;; incrementing by one
@@ -1423,17 +1424,78 @@
     (miller-rabin-test n) (fast-prime-mr? n (dec times))
     :else false))
 
-;; Feeling lazy, so will just use HOFs to test whether fast-prime-mr? works.
-;; Seems to work as expected.
-;;(filter #(fast-prime-mr? % 20) (range 10000000 10000200))
-;;(10000019
-;; 10000079
-;; 10000103
-;; 10000121
-;; 10000139
-;; 10000141
-;; 10000169
-;; 10000189)
+  ;; modified the procedures from book to print out only prime numbers
+(defn report-prime-mr [n elapsed-time]
+  (newline)
+  (print n)
+  (print " *** ")
+  (print elapsed-time))
+
+(defn start-prime-test-mr [n start-time]
+  (if (fast-prime-mr? n 20)
+    (report-prime-mr n (- (System/currentTimeMillis) start-time))))
+
+(defn timed-prime-test-mr [n]
+  (start-prime-test-mr n (System/currentTimeMillis)))
+
+(defn search-for-primes-helper-mr [start end]
+  (if (<= start end)
+    (timed-prime-test-mr start))
+  (if (<= start end)
+    (search-for-primes-helper-mr (+ 2 start) end)))
+
+(defn search-for-primes-mr [start end]
+  (if (even? start)
+    (search-for-primes-helper-mr (inc start) end)
+    (search-for-primes-helper-mr start end)))
+
+;; seems to work just as accurately as prime? function
+
+;; sicp.ch1.s2> (search-for-primes-mr 10000000 10000200)
+
+;; 10000019 *** 1
+;; 10000079 *** 0
+;; 10000103 *** 1
+;; 10000121 *** 0
+;; 10000139 *** 0
+;; 10000141 *** 1
+;; 10000169 *** 0
+;; 10000189 *** 0
+;; nil
+;; sicp.ch1.s2> (search-for-primes-mr 100000000 100000200)
+
+;; 100000007 *** 0
+;; 100000037 *** 0
+;; 100000039 *** 0
+;; 100000049 *** 1
+;; 100000073 *** 1
+;; 100000081 *** 0
+;; 100000123 *** 0
+;; 100000127 *** 0
+;; 100000193 *** 0
+;; nil
+;; sicp.ch1.s2> (search-for-primes-mr 1000000000 1000000200)
+
+;; 1000000007 *** 0
+;; 1000000009 *** 1
+;; 1000000021 *** 0
+;; 1000000033 *** 1
+;; 1000000087 *** 1
+;; 1000000093 *** 1
+;; 1000000097 *** 0
+;; 1000000103 *** 1
+;; 1000000123 *** 1
+;; 1000000181 *** 0
+;; nil
+
+
+;; Miller-Rabin test is not fooled by the provided carmichael numbers
+;; (map #(fast-prime-mr? % 100) [561 1105 1729 2465 2821 6601])
+;; (false false false false false false)
+
+;; all primes between 2 and 100
+;; sicp.ch1.s2> (filter #(fast-prime-mr? % 20) (range 2 101))
+;; (2 3 5 7 11 13 17 19 23 29 31 37 41 43 47 53 59 61 67 71 73 79 83 89 97)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;  Experimenting with Miller-Rabin test
@@ -1519,11 +1581,6 @@
 ;;;;
 ;; Not bad. Much less leaky than Fermat test
 ;;;;
-
-
-;; Miller-Rabis test is not fooled by the provided carmichael numbers
-;; (map #(fast-prime-mr? % 100) [561 1105 1729 2465 2821 6601])
-;; (false false false false false false)
 
 
 ;; failure occurs fairly early for carmichael numbers
