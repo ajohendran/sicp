@@ -34,9 +34,9 @@
 ;; For small values it doesn't matter 
 ;; but still, correct definition is just one step away
 (defn integral-correct [f a b dx]
-	(defn i-term [x] (f (+ x (/ dx 2.0))))
-	(defn add-dx [x] (+ x dx))
-	(* dx (sum i-term a add-dx b))) 
+  (defn i-term [x] (f (+ x (/ dx 2.0))))
+  (defn add-dx [x] (+ x dx))
+  (* dx (sum i-term a add-dx b))) 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 1.29
@@ -48,17 +48,28 @@
 ;; ------
 ;; f(a+(n-2)h) + 4f(a+(n-1)h) + f(a+nh)
 
-(defn integral [f a b n]
-  (let [h (/ (- b a) n)
-        term (fn [x]
-               (+ (f (+ a (* x h)))
-                  (* 4 (f (+ a (* (+ x 1) h))))
-                  (f (+ a (* (+ x 2) h)))))
-        nxt (fn [x] (+ x 2))]
-    (* (/ h 3)
-       (sum term 0 nxt (- n 2)))))
+
+(defn simpson-rule [f a b n]
+  (defn next [x] (+ x 2))
+  (defn helper [h]
+    (defn term [x]
+      (+ (f (+ a (* x h)))
+         (* 4 (f (+ a (* (inc x) h))))
+         (f (+ a (* (+ 2 x) h)))))
+    (* (/ h 3.0) (sum term a next (- n 2))))
+  (helper (/ (- b a) n)))
 
 
+
+;; (defn simpson-rule-let [f a b n]
+;;   (let [h (/ (- b a) n)
+;;         term (fn [x]
+;;                (+ (f (+ a (* x h)))
+;;                   (* 4 (f (+ a (* (+ x 1) h))))
+;;                   (f (+ a (* (+ x 2) h)))))
+;;         nxt (fn [x] (+ x 2))]
+;;     (* (/ h 3.0)
+;;        (sum term 0 nxt (- n 2)))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
