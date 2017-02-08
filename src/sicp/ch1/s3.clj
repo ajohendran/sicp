@@ -29,6 +29,14 @@
   (defn add-dx [x] (+ x dx))
   (* dx (sum f (+ a (/ dx 2)) add-dx b)))
 
+;; NOTE - Different from how it is defined in the book
+;; According to book, a-> a + dx/2
+;; For small values it doesn't matter 
+;; but still, correct definition is just one step away
+(defn integral-correct [f a b dx]
+	(defn i-term [x] (f (+ x (/ dx 2.0))))
+	(defn add-dx [x] (+ x dx))
+	(* dx (sum i-term a add-dx b))) 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 1.29
