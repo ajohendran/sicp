@@ -192,31 +192,66 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
+;;;; a ;;;;
+
 (defn product [term a nextt b]
   (if (> a b)
     1
     (* (term a) (product term (nextt a) nextt b))))
 
 
+(defn factorial [n]
+  (product identity 1 inc n))
 
+;; Procedure can be written in many different ways
+;; As with Simpson rule, we'll look to use the simplest definition
+;; by consolidating what can be a term
+(defn pi-approx [n]
+  (defn nxt [x] (+ x 2.0))
+  (defn term [x] (/
+                  (* x (+ 2 x))
+                  (* (inc x) (inc x))))
+  (* 4.0 (product term 2.0 nxt (* 2 n))))
+
+
+;;;;; b.
+
+(defn product [term a nxt b]
+  (defn itr [nxt-val res]
+    (if (> nxt-val b)
+      res
+      (recur (nxt nxt-val) (* res (term nxt-val))))
+    )
+  (itr a 1))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 1.32
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn accumulator [combiner null-val term a nxt b]
-  (loop [acc null-val
-        x a]
-    (if (> x b)
-      acc
-      (recur (combiner acc (term x)) (nxt x)))))
+;;a;;
+(defn accumulate [combiner null-value term a nxt b]
+  (defn process [next-val]
+    (if (> next-val b)
+    null-value
+    (combiner (term next-val) (process (nxt next-val)))))
+  (process a))
 
 (defn sum [term a nxt b]
-  (accumulator + 0 term a nxt b))
+  (accumulate + 0 term a nxt b))
 
 (defn product [term a nxt b]
-  (accumulator * 1 term a nxt b))
+  (accumulate * 1 term a nxt b))
+
+
+;;b;;
+
+(defn accumulate [combiner null-value term a nxt b]
+  (defn process [next-val res]
+    (if (> next-val b)
+      res
+      (recur (nxt next-val) (combiner res (term next-val)))))
+  (process a null-value))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -224,16 +259,87 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(defn filtered-accumulate [combiner null-val term a nxt b fltr]
-  (loop [acc null-val
-        x a]
-    (if (> x b)
-      acc
-      (recur (if (fltr x)
-               (combiner acc (term x))
-               acc)
-             (nxt x)))))
+;; recursive
+(defn filtered-accumulate [combiner filtr null-value term a nxt b]
+  (defn process [next-val]
+    (cond
+      (> next-val b) null-value
+      (filtr next-val) (combiner (term next-val) (process (nxt next-val))) 
+      :else (process (nxt next-val))))
+  (process a))
 
+;; iterative
+(defn filtered-accumulate [combiner filtr null-value term a nxt b]
+  (defn process [next-val res]
+    (cond
+      (> next-val b) res
+      (filtr next-val) (process (nxt next-val) (combiner res (term next-val))) 
+      :else (process (nxt next-val) res)))
+  (process a null-value))
+
+
+(defn square [n]
+  (* n n))
+
+;; could be made a tad bit more efficient by introducing another function.
+;; for purposes of illustration and for maintaining clarity, leaving as is
+(defn check-non-trivial-sqrt [result m]
+  (cond
+    (= result (dec m)) (rem (square result) m)
+    (= result 1) (rem (square result) m)
+    (= (rem (square result) m) 1) 0 
+    :else (rem (square result) m)))
+
+(defn expmod-mr [base exp m]
+  (cond 
+    (= exp 1) base
+    (even? exp) (check-non-trivial-sqrt
+                 (expmod-mr base (/ exp 2) m)
+                 m)
+    :else (rem (* base (expmod-mr base (dec exp) m)) m)))
+
+
+(defn miller-rabin-test [n]
+  (defn try-it [a]
+    (= (expmod-mr a (dec n) n) 1))
+  (try-it (inc (rand-int (dec n)))))
+
+
+(defn fast-prime-mr? [n times]
+  (cond
+    (= times 0) true
+    (miller-rabin-test n) (fast-prime-mr? n (dec times))
+    :else false))
+
+(defn prime? [n]
+  (fast-prime-mr? n 20))
+
+(defn gcd [a b]
+  (if (= b 0)
+    a
+    (recur b (rem a b))))
+
+
+;;;; a ;;;;
+(defn sum-squares-primes [a b]
+  (filtered-accumulate + prime? 0 identity a inc b))
+
+
+;;;; b ;;;;
+
+
+(defn product-relative-prime [n]
+  (defn relative-prime? [x]
+    (= 1 (gcd n x)))
+  (filtered-accumulate * relative-prime? 1 identity 1 inc n))
+
+
+;; sicp.ch1.s3> (filter #(= 1 (gcd 10 %)) (range 1 21))
+;; (1 3 7 9 11 13 17 19)
+;; sicp.ch1.s3> (* 1 3 7 9 11 13 17 19)
+;; 8729721
+;; sicp.ch1.s3> (product-relative-prime 20)
+;; 8729721
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -243,7 +349,7 @@
 (defn f [g]
   (g 2))
 
-;; (f f) seems silly. it will call f with 2 and then try to use 2 as a fuction
+;; (f f) seems silly. it will call f with 2 and then try to use 2 as a procedure
 
 
 
