@@ -7,10 +7,10 @@
 
 (defn cube [x] (* x x x))
 
-(defn sum [term a next b]
+(defn sum [term a nextt b]
   (if (> a b)
     0
-    (+ (term a) (sum term (next a) next b))))
+    (+ (term a) (sum term (nextt a) nextt b))))
 
 (defn sum-cubes [a b]
   (sum cube a inc b))
@@ -29,70 +29,175 @@
   (defn add-dx [x] (+ x dx))
   (* dx (sum f (+ a (/ dx 2)) add-dx b)))
 
-;; NOTE - Different from how it is defined in the book
-;; According to book, a-> a + dx/2
-;; For small values it doesn't matter 
-;; but still, correct definition is just one step away
-(defn integral-correct [f a b dx]
+;; If sum is altered to print out 'a'
+;; sicp.ch1.s3> (integral cube 0 1 0.1)
+
+;; a= 0.05
+;; a= 0.15000000000000002
+;; a= 0.25
+;; a= 0.35
+;; a= 0.44999999999999996
+;; a= 0.5499999999999999
+;; a= 0.6499999999999999
+;; a= 0.7499999999999999
+;; a= 0.8499999999999999
+;; a= 0.9499999999999998
+
+;; 0.24874999999999994
+
+
+;; NOTE - Following definition is different from book's definition
+;; According to book sum is called with a-> a + dx/2
+;; What if 'a' in the formula is same as parameter 'a' of sum procedure
+;; That is, 'a' passed to integral procedure is  'a' passed to sum procedure
+
+(defn integral-2 [f a b dx]
   (defn i-term [x] (f (+ x (/ dx 2.0))))
   (defn add-dx [x] (+ x dx))
   (* dx (sum i-term a add-dx b))) 
+
+;; sicp.ch1.s3> (integral-correct cube 0 1 0.1)
+
+;; a= 0
+;; a= 0.1
+;; a= 0.2
+;; a= 0.30000000000000004
+;; a= 0.4
+;; a= 0.5
+;; a= 0.6
+;; a= 0.7
+;; a= 0.7999999999999999
+;; a= 0.8999999999999999
+;; a= 0.9999999999999999
+
+;; 0.36451249999999996
+
+
+;; The above values of 'a' are clearly wrong
+;; NOTE: 'a' in formula is different from parameter 'a' passed to sum procedure
+;; i.e.: 'a' passed to integral procedure may not be 'a' passed to sum procedure,
+;; their meanings are different!
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 1.29
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; f(a+0h) + 4f(a+1h) + f(a+2h)
-;; f(a+2h) + 4f(a+3h) + f(a+4h)
-;; f(a+4h) + 4f(a+5h) + f(a+6h)
-;; ------
+;; (h/3) * [y0 + 4y1 + 2y2 + 4y3 + 2y4 + ......2yn-2+ 4yn-1+yn]
+;; h=(b-a)/n
+;; yk = f(a+kh)
+
+
+;; First, every 3rd element needs to be broken into two so that
+;; we can use our SUM procedure easily.
+;; So each TERM is composed of three parts
+
+;; f(a+0h) + 4f(a+1h) + f(a+2h) +
+;; f(a+2h) + 4f(a+3h) + f(a+4h) +
+;; f(a+4h) + 4f(a+5h) + f(a+6h) +
+;; ............................ +
+;; ............................ +
 ;; f(a+(n-2)h) + 4f(a+(n-1)h) + f(a+nh)
 
 
+;; This algorithm is essentially breaking the interval b-a into small parts
+;; by dividing into  n parts.
+;; We successively add each small part to 'a' and apply the function over it.
+;; We then add the resulting values with a periodic set of co-efficients applied
+
+;; If n=10,a=0, b=1,f=cube, then h = 0.1
+
+;; intergal = (1)/(10*3) *
+;; [
+;;  f(a+0h) + 4f(a+1h) + f(a+2h)
+;;  f(a+2h) + 4f(a+3h) + f(a+4h)
+;;  f(a+4h) + 4f(a+5h) + f(a+6h)
+;;  f(a+6h) + 4f(a+7h) + f(a+8h)
+;;  f(a+8h) + 4f(a+9h) + f(a+10h)
+;; ]
+
+;; = 1/30 *
+;; [
+;;  (0.0)^3 + 4*(0.1)^3 + (0.2)^3
+;;  (0.2)^3 + 4*(0.3)^3 + (0.4)^3
+;;  (0.4)^3 + 4*(0.5)^3 + (0.6)^3
+;;  (0.6)^3 + 4*(0.7)^3 + (0.8)^3
+;;  (0.8)^3 + 4*(0.9)^3 + (1.00)^3
+;; ]
+
+;; = 1/30 *
+;; [
+;;  0.000 + 0.004 + 0.008    ;; term-> 0.012
+;;  0.008 + 0.108 + 0.064    ;; term-> 0.18
+;;  0.064 + 0.500 + 0.216    ;; term-> 0.78
+;;  0.216 + 1.372 + 0.512    ;; term-> 2.1
+;;  0.512 + 2.916 + 1.000    ;; term-> 4.428
+;; ]
+
+;; = 1/30 * 7.5
+
+;; = 0.25
+
+
+
+;; NOTE: 'a' passed to integral procedure is not the 'a' passed to sum procedure
+;; See analysis in above section
+;; For this formula, we have a to b ,  divided into h sections
+;; For sum procedure, we start with formula value 'a' and add h to it until we reach
+;; formula value 'b'. So, in this case from a+0h to a+nh
 (defn simpson-rule [f a b n]
-  (defn next [x] (+ x 2))
+  (defn nextt [x] (+ x 2))
   (defn helper [h]
     (defn term [x]
       (+ (f (+ a (* x h)))
          (* 4 (f (+ a (* (inc x) h))))
          (f (+ a (* (+ 2 x) h)))))
-    (* (/ h 3.0) (sum term a next (- n 2))))
+    (* (/ h 3.0) (sum term 0 nextt (- n 2))))
   (helper (/ (- b a) n)))
 
+;; If we altered sum procedure to print a and term(a)
+;; sicp.ch1.s3> (simpson-rule cube 0 1 10.0)
+;; a= 0  ; term = 0.012000000000000004
+;; a= 2  ; term = 0.18000000000000005
+;; a= 4  ; term = 0.7800000000000001
+;; a= 6  ; term = 2.1000000000000005
+;; a= 8  ; term = 4.428000000000001
+;; 0.25
 
-
-;; (defn simpson-rule-let [f a b n]
-;;   (let [h (/ (- b a) n)
-;;         term (fn [x]
-;;                (+ (f (+ a (* x h)))
-;;                   (* 4 (f (+ a (* (+ x 1) h))))
-;;                   (f (+ a (* (+ x 2) h)))))
-;;         nxt (fn [x] (+ x 2))]
-;;     (* (/ h 3.0)
-;;        (sum term 0 nxt (- n 2)))))
+;;
+;; (defn sum [term a nextt b]
+;;   (if (> a b)
+;;     0
+;;     (do (println "a=" a "; term(a)=" (term a))
+;;         (+ (term a) (sum term (nextt a) nextt b)))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Ex 1.31
+;;; Ex 1.30 - Iterative sum procedure
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn product [term a nxt b]
-  (loop [acc 1
-        x a]
-    (if (> x b)
-      acc
-      (recur (* acc (term x)) (nxt x)))))
-
-(defn factorial [n]
-  (product identity 1 inc n))
 
 
-(defn pi-apprx [n]
-  (let [term (fn [x]
-               (/ (* x (+ x 2))
-                  (* (inc x) (inc x))))
-        nxt (fn [y] (+ y 2))]
-    (double (* 4 (product term 2 nxt (* 2 n))))))
+(defn sum [term a nextt b]
+  (defn iterr [a res]
+    (if (> a b)
+      res
+      (iterr (nextt a) (+ res (term a)))))
+  (iterr a 0))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 1.31 - Product 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defn product [term a nextt b]
+  (if (> a b)
+    1
+    (* (term a) (product term (nextt a) nextt b))))
+
+
 
 
 
