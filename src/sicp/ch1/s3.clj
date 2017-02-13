@@ -578,9 +578,14 @@
 (defn cont-frac 
   ([n d k] (cont-frac n d k 0))
   ([n d k res]
-   (if (= k 1) (/ (n 1) (+ (d 1) res))
-       (recur n d (dec k) (double (/ (n k) (d k)))))))
+   (if (= k 0)
+     res
+     (recur n d (dec k) (/ (n k) (+ (d k) res))))))
 
+;; sicp.ch1.s3> (cont-frac (fn [i] 1.0) (fn [i] 1.0) 13)
+;; 0.6180371352785146
+;; sicp.ch1.s3> (cont-frac (fn [i] 1.0) (fn [i] 1.0) 11)
+;; 0.6180555555555556
 ;; (cont-frac (constantly 1) (constantly 1) 500)
 ;; k of 12 provides answer to accuracy of 4 decimal places
 
@@ -588,18 +593,55 @@
 ;;; Ex 1.38
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; 1  -> 1 * 2  
-;; 4  -> 2 *2
-;; 7  -> 3 * 2
-;; 10 -> 4 * 2
-;; 13 -> 5 * 2
+;; e = 2.71828182846
 
+
+;; 1, 2, 1, 1, 4, 1, 1, 6, 1, 1, 8, ....
+
+;; 2nd term  -> 1 * 2  
+;; 5th term  -> 2 * 2
+;; 8         -> 3 * 2
+;; 11        -> 4 * 2
+;; 14        -> 5 * 2
 
 (defn denom-euler [n]
-  (if (== 0 (mod (dec n) 3))
-    (* 2 (inc (quot n 3)))
-    1))
+  (if (== 0 (mod (inc n) 3))
+    (* 2.0 (quot (inc n) 3))
+    1.0))
 
-;; (cont-frac (constantly 1) denom-euler 100)
 
-(defn euler-c ())
+(defn euler-c []
+  (+ 2.0 (cont-frac (constantly 1.0) denom-euler 100)))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 1.39
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn cont-frac 
+  ([n d k] (cont-frac n d k + 0.0))
+  ([n d k f] (cont-frac n d k f 0.0))
+  ([n d k f res]
+   (if (= k 0)
+     res
+     (recur n d (dec k) f (/ (n k) (f (d k) res))))))
+
+(defn tan-cf [x k]
+  (cont-frac
+   (fn [i] (Math/pow x i))
+   (fn [i] (dec (* 2 i)))
+   k
+   -))
+
+;; sicp.ch1.s3> (Math/tan 1.0)
+;; 1.5574077246549023
+;; sicp.ch1.s3> (tan-cf 1.0 100)
+;; 1.557407724654902
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Procedures as Returned Values
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
