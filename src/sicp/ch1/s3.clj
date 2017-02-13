@@ -358,28 +358,126 @@
 ;;; 1.3 Procedures as General Methods
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def ^:dynamic *tolerance*  0.0000001)
-(defn fixed-point [f guess]
-  (let [n (f guess)]
-    (if (< (Math/abs (- n guess)) *tolerance*)
-      guess
-      (recur f n))))
+
+;; SInce lambda and let have been covered,going forward let or letfn
+;; will be used instead of writing defn within another defn
+;; loop/recur also may not a bad idea
+
+(defn average [a b]
+  (/ (+ a b) 2.0))
+
+(defn close-enough? [a b]
+  (< (Math/abs (- a b)) 0.001) )
+
+(defn search-hi [f neg-point pos-point]
+  (let [mid-point (average neg-point pos-point)]
+    (if (close-enough? neg-point pos-point)
+      mid-point
+      (let [mid-val (f mid-point)]
+        (cond (pos? mid-val) (search-hi f neg-point mid-point)
+              (neg? mid-val) (search-hi f mid-point pos-point)
+              :else mid-point)))))
+
+(defn half-interval-method [f a b]
+  (let [first-val (f a)
+        second-val (f b)]
+    (cond
+      (and (pos? first-val) (neg? second-val)) (search-hi f b a)
+      (and (neg? first-val) (pos? second-val)) (search-hi f a b)
+      :else (throw (RuntimeException.
+                    (str "Values are not of opposite sign " a  "," b))))))
+
+
+;; sicp.ch1.s3> (half-interval-method #(Math/sin %) 2 4)
+;; 3.14111328125
+
+;; sicp.ch1.s3> (half-interval-method (fn [x] (- (* x x x) (* 2 x) 3))
+;;                                    1.0
+;;                                    2.0)
+;; 1.89306640625
+
+
+
+(def ^:dynamic *tolerance*  0.00001)
+
+(defn fixed-point [f first-guess]
+  (defn try-it [current-guess]
+    (let [next-guess (f current-guess)]
+              (if (< (Math/abs (- next-guess current-guess)) *tolerance*)
+                next-guess
+                (recur next-guess))))
+  (try-it first-guess ))
+
+;; Internal procedure defintions with defn are so ugly!
+;; Maybe letfn will make it look simpler?
+(defn fixed-point [f first-guess]
+  (letfn [(try-it [current-guess]
+            (let [next-guess (f current-guess)]
+              (if (< (Math/abs (- next-guess current-guess)) *tolerance*)
+                next-guess
+                (recur next-guess))
+              ))]
+    (try-it first-guess )))
+;; Ugh, not so much!
+
+
+;; I assume this is a good point to start using loop/recur
+(defn fixed-point [f first-guess]
+  (loop [current-guess first-guess
+         next-guess (f first-guess)]
+    (println "next-guess: " next-guess)
+    (if (< (Math/abs (- next-guess current-guess)) *tolerance*)
+      next-guess
+      (recur next-guess (f next-guess)))))
+
+
+
+;; sicp.ch1.s3> (fixed-point #(Math/cos %) 1.0)
+;; 0.7390822985224024
+
+;; sicp.ch1.s3> (fixed-point (fn [y] (+ (Math/sin y) (Math/cos y)))
+;;                           1.0)
+;; 1.2587315962971173
+
 
 (defn sqrt [x]
   (fixed-point (fn [y] (/ x y)) 1.0))
 
 (defn avg [a b]
-  (/ (+ a b) 2))
+  (/ (+ a b) 2.0))
 
 (defn sqrt [x]
   (fixed-point (fn [y] (avg y (/ x y))) 1.0))
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;Definition of Sqrt from Section 1.17
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn square [x]
+  (* x x))
+
+(defn good-enough? [guess x]
+  (< (Math/abs (- (square guess) x))  0.00001))
+
+;; 2 should be represented in decimal to avoid ratios
+(defn average [a b]
+  (/ (+ a b) 2.0))
+
+(defn improve [guess x]
+  (average guess (/ x guess)))
+
+(defn sqrt-iter [guess x]
+  (println "guess: " guess)
+  (if (good-enough? guess x)
+    guess
+    (sqrt-iter (improve guess x) x)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 1.35
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; definition of golden ratio is (x * x) = (x + 1)
+;; definition of golden ratio is thatit satisfies equation (x * x) = (x + 1)
 ;; same as x -> 1 + 1/x
 
 (defn gldnrto []
@@ -390,20 +488,76 @@
 ;;; Ex 1.36
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn fixed-point [f guess]
-  (let [n (f guess)]
-    (println "approx (" guess ") -> " n)
-    (if (< (Math/abs (- n guess)) *tolerance*)
-      guess
-      (recur f n))))
-
-
+;; x^x=1000
+;; x = log 1000 / log x
 (defn x-raised-x [x]
-  (fixed-point (fn [y] (/ (Math/log10 x) (Math/log10 y))) 1.1))
+  (fixed-point (fn [y] (/ (Math/log x) (Math/log y))) 1.1))
+
+;; sicp.ch1.s3> (x-raised-x 1000)
+;; next-guess:  72.47657378429035
+;; next-guess:  1.6127318474109593
+;; next-guess:  14.45350138636525
+;; next-guess:  2.5862669415385087
+;; next-guess:  7.269672273367045
+;; next-guess:  3.4822383620848467
+;; next-guess:  5.536500810236703
+;; next-guess:  4.036406406288111
+;; next-guess:  4.95053682041456
+;; next-guess:  4.318707390180805
+;; next-guess:  4.721778787145103
+;; next-guess:  4.450341068884912
+;; next-guess:  4.626821434106115
+;; next-guess:  4.509360945293209
+;; next-guess:  4.586349500915509
+;; next-guess:  4.535372639594589
+;; next-guess:  4.568901484845316
+;; next-guess:  4.546751100777536
+;; next-guess:  4.561341971741742
+;; next-guess:  4.551712230641226
+;; next-guess:  4.558059671677587
+;; next-guess:  4.55387226495538
+;; next-guess:  4.556633177654167
+;; next-guess:  4.554812144696459
+;; next-guess:  4.556012967736543
+;; next-guess:  4.555220997683307
+;; next-guess:  4.555743265552239
+;; next-guess:  4.555398830243649
+;; next-guess:  4.555625974816275
+;; next-guess:  4.555476175432173
+;; next-guess:  4.555574964557791
+;; next-guess:  4.555509814636753
+;; next-guess:  4.555552779647764
+;; next-guess:  4.555524444961165
+;; next-guess:  4.555543131130589
+;; next-guess:  4.555530807938518
+;; next-guess:  4.555538934848503
+;; 4.555538934848503
 
 
+
+;; x+x = x + (log 1000 / log x)
+;; x = 1/2 * [x +  (log 1000 / log x)]
 (defn x-raised-x [x]
   (fixed-point (fn [y] (avg y (/ (Math/log x) (Math/log y)))) 1.1))
+
+;; sicp.ch1.s3> (x-raised-x 1000)
+;; next-guess:  36.78828689214517
+;; next-guess:  19.352175531882512
+;; next-guess:  10.84183367957568
+;; next-guess:  6.870048352141772
+;; next-guess:  5.227224961967156
+;; next-guess:  4.701960195159289
+;; next-guess:  4.582196773201124
+;; next-guess:  4.560134229703681
+;; next-guess:  4.5563204194309606
+;; next-guess:  4.555669361784037
+;; next-guess:  4.555558462975639
+;; next-guess:  4.55553957996306
+;; next-guess:  4.555536364911781
+;; 4.555536364911781
+
+
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
