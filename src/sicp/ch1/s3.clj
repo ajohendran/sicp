@@ -894,45 +894,71 @@
 ;; sicp.ch1.s3> ((n-fold-smoothed square 5) 4)
 ;; 16.000000000003336
 
-(defn n-fold [f1 f2 n]
-  ((repeated f1 n) f2))
 
-(defn apply-twice-add [f]
-  (fn [x] (+ (f x) (f x))))
-
-
-;; ((apply-twice-add (apply-twice-add (apply-twice-add inc))) 2)
-;; 24
-;; sicp.ch1.s3> ((n-fold apply-twice-add inc 3) 2)
-;; 24
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Analysis on how n-fold-smoothing works
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 
 (def ^:dynamic *dx*  0.01)
 
-
-(defn my-inc [x]
-  (println "My-Inc: Applying inc on " x)
-  (inc x))
-
 (defn my-square [x]
   (println "My-Square: Squaring " x " to produce " (* x x))
   (* x x))
 
-(defn apply-twice-add [f]
-  (println "Apply-Twice-Add: Called with parameter function: " f)
-  (fn inner-fn [x]
-    (println "Inner-Fn: Applying " f " twice on " x "and adding")
-    (+ (f x) (f x))))
+(defn smoothed [f]
+  (println "Smoothed: Called with parameter function: " f)
+  (letfn [(mr-smooth [x]
+            (println "Mr-Smooth: Smoothing out " f " on " x )
+            (let [ans (/ (+ (f (- x *dx*))
+                            (f x)
+                            (f (+ x *dx*)))
+                         3)]
+              (println "Mr-Smooth: Smoothed out " f " on " x " with result " ans)
+              ans))]
+    (println "Smoothed: Returning function: " mr-smooth)
+    mr-smooth))
+
+;; sicp.ch1.s3> ((n-fold-smoothed my-square 2) 4)
+;; Smoothed: Called with parameter function:  #function[sicp.ch1.s3/my-square]
+;; Smoothed: Returning function:  #function[sicp.ch1.s3/smoothed/mr-smooth--11219]
+;; Smoothed: Called with parameter function:  #function[sicp.ch1.s3/smoothed/mr-smooth--11219]
+;; Smoothed: Returning function:  #function[sicp.ch1.s3/smoothed/mr-smooth--11219]
+;; Mr-Smooth: Smoothing out  #function[sicp.ch1.s3/smoothed/mr-smooth--11219]  on  4
+;; Mr-Smooth: Smoothing out  #function[sicp.ch1.s3/my-square]  on  3.99
+;; My-Square: Squaring  3.9800000000000004  to produce  15.840400000000004
+;; My-Square: Squaring  3.99  to produce  15.920100000000001
+;; My-Square: Squaring  4.0  to produce  16.0
+;; Mr-Smooth: Smoothed out  #function[sicp.ch1.s3/my-square]  on  3.99  with result  15.920166666666669
+;; Mr-Smooth: Smoothing out  #function[sicp.ch1.s3/my-square]  on  4
+;; My-Square: Squaring  3.99  to produce  15.920100000000001
+;; My-Square: Squaring  4  to produce  16
+;; My-Square: Squaring  4.01  to produce  16.080099999999998
+;; Mr-Smooth: Smoothed out  #function[sicp.ch1.s3/my-square]  on  4  with result  16.000066666666665
+;; Mr-Smooth: Smoothing out  #function[sicp.ch1.s3/my-square]  on  4.01
+;; My-Square: Squaring  4.0  to produce  16.0
+;; My-Square: Squaring  4.01  to produce  16.080099999999998
+;; My-Square: Squaring  4.02  to produce  16.160399999999996
+;; Mr-Smooth: Smoothed out  #function[sicp.ch1.s3/my-square]  on  4.01  with result  16.080166666666667
+;; Mr-Smooth: Smoothed out  #function[sicp.ch1.s3/smoothed/mr-smooth--11219]  on  4  with result  16.000133333333334
+;; 16.000133333333334
 
 
 (defn smoothed [f]
   (println "Smoothed: Called with parameter function: " f)
-  (fn mr-smooth [x]
-    (println "Mr-Smooth: Smoothing out " f " on " x )
-    (let [ans (/ (+ (f (- x *dx*))
-                    (f x)
-                    (f (+ x *dx*)))
-                 3)]
-      (println "Mr-Smooth: Smoothed out " f " on " x " with result " ans)
-      ans)))
+  (letfn [(mr-smooth [x]
+            (println "Mr-Smooth: Smoothing out " f " on " x )
+            (let [ans (/ (+ (f (- x *dx*))
+                            (f x)
+                            (f (+ x *dx*)))
+                         3)]
+              (println "Mr-Smooth: Smoothed out " f " on " x " with result " ans)
+              ans))]
+    (println "Smoothed: Returning function: " mr-smooth)
+    mr-smooth))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 1.45
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
