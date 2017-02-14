@@ -220,8 +220,7 @@
   (defn itr [nxt-val res]
     (if (> nxt-val b)
       res
-      (recur (nxt nxt-val) (* res (term nxt-val))))
-    )
+      (recur (nxt nxt-val) (* res (term nxt-val)))))
   (itr a 1))
 
 
@@ -460,7 +459,6 @@
 (defn good-enough? [guess x]
   (< (Math/abs (- (square guess) x))  0.00001))
 
-;; 2 should be represented in decimal to avoid ratios
 (defn average [a b]
   (/ (+ a b) 2.0))
 
@@ -589,6 +587,8 @@
 ;; (cont-frac (constantly 1) (constantly 1) 500)
 ;; k of 12 provides answer to accuracy of 4 decimal places
 
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 1.38
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -610,14 +610,17 @@
     1.0))
 
 
-(defn euler-c []
+(defn euler-cf []
   (+ 2.0 (cont-frac (constantly 1.0) denom-euler 100)))
+
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 1.39
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Using overloaded method definition
 (defn cont-frac 
   ([n d k] (cont-frac n d k + 0.0))
   ([n d k f] (cont-frac n d k f 0.0))
@@ -626,16 +629,27 @@
      res
      (recur n d (dec k) f (/ (n k) (f (d k) res))))))
 
+;; using loop/recur
+(defn cont-frac 
+  ([n d k] (cont-frac n d k + 0.0))
+  ([n d k f null-value]
+   (loop [k k
+          res null-value]
+     (if (= k 0)
+       res
+       (recur (dec k) (/ (n k) (f (d k) res)))))))
+
 (defn tan-cf [x k]
   (cont-frac
-   (fn [i] (Math/pow x i))
+   (fn [i] (Math/pow x (if (= i 1) 1 2)))
    (fn [i] (dec (* 2 i)))
    k
-   -))
+   -
+   0.0))
 
 ;; sicp.ch1.s3> (Math/tan 1.0)
 ;; 1.5574077246549023
-;; sicp.ch1.s3> (tan-cf 1.0 100)
+;; sicp.ch1.s3> (tan-cf 1.0 10)
 ;; 1.557407724654902
 
 
@@ -645,3 +659,280 @@
 ;;; Procedures as Returned Values
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn avg [a b]
+  (/ (+ a b) 2.0))
+
+(defn average-damp [f]
+  (fn [x] (avg x (f x))))
+
+(def ^:dynamic *tolerance*  0.000001)
+
+(defn fixed-point [f first-guess]
+  (loop [current-guess first-guess
+         next-guess (f first-guess)]
+    (println "next-guess: " next-guess)
+    (if (< (Math/abs (- next-guess current-guess)) *tolerance*)
+      next-guess
+      (recur next-guess (f next-guess)))))
+
+(defn sqrt [x]
+  (fixed-point (fn [y] (avg y (/ x y))) 1.0))
+
+(defn sqrt [x]
+  (fixed-point (average-damp (fn [y] (/ x y)))
+               1.0))
+
+(defn cube-root [x]
+  (fixed-point (average-damp (fn [y] (/ x (* y y))))
+               1.0))
+
+
+;;;;;;; Neton's Method ;;;;;;
+
+(def ^:dynamic *dx*  0.000001)
+
+(defn deriv [g]
+  (fn [x]
+    (/ (- (g (+ x *dx*)) (g x))
+       *dx*)))
+
+(defn square [x] (* x x))
+
+(defn cube [x] (* x x x))
+
+;;((deriv cube) 5)
+;; 75.00014999664018
+
+;; The thing to remember about Newton's method is that
+;; we have to express the equation as g(x) = 0
+;; That is we are trying to find the root!
+;; y = x/y
+;; y^2 = x
+;; Y^2 - x = 0
+(defn newton-transform [g]
+  (fn [x]
+    (- x
+       (/ (g x)
+          ((deriv g) x)))))
+
+(defn newtons-method [g guess]
+  (fixed-point (newton-transform g) guess))
+
+(defn sqrt [x]
+  (newtons-method (fn [y] (- (square y) x))
+                  1.0))
+
+;; Hmm, following definition results in 'divide by zero' exception
+(defn sqrt [x]
+  (newtons-method (fn [y] (/ x y))
+                  1.0))
+
+
+
+(defn fixed-point-of-transform [g transform guess]
+  (fixed-point (transform g) guess))
+
+
+(defn sqrt [x]
+  (fixed-point-of-transform (fn [y] (/ x y))
+                            average-damp
+                            1.0))
+
+;; sicp.ch1.s3> (sqrt 144.0)
+;; next-guess:  72.5
+;; next-guess:  37.24310344827586
+;; next-guess:  20.554795555442038
+;; next-guess:  13.7802299905638
+;; next-guess:  12.11499150672641
+;; next-guess:  12.000545730742438
+;; next-guess:  12.000000012408687
+;; next-guess:  12.0
+;; 12.0
+
+(defn sqrt [x]
+  (fixed-point-of-transform (fn [y] (- (square y) x))
+                            newton-transform
+                            1.0))
+
+;; sicp.ch1.s3> (sqrt 144.0)
+;; next-guess:  72.49996461787373
+;; next-guess:  37.243086414059384
+;; next-guess:  20.554788099216534
+;; next-guess:  13.780227704616813
+;; next-guess:  12.114991288777757
+;; next-guess:  12.00054573328618
+;; next-guess:  12.00000001243097
+;; next-guess:  12.0
+;; 12.0
+
+(defn cube-root [x]
+  (fixed-point-of-transform (fn [y] (- (cube y) x))
+                            newton-transform
+                            1.0))
+
+;; sicp.ch1.s3> (cube-root 8)
+;; next-guess:  3.3333310001595553
+;; next-guess:  2.4622212642840395
+;; next-guess:  2.0813411060566223
+;; next-guess:  2.0031375260791937
+;; next-guess:  2.0000049133240116
+;; next-guess:  2.0000000000145284
+;; next-guess:  2.0
+;; 2.0
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 1.40
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Function is x3 + ax2 + bx + c
+;;(newtons-method (cubic a b c) 1)
+
+(defn cubic [a b c]
+  (fn [x]
+    (+ (cube x)
+       (* a (square x))
+       (* b x)
+       c)))
+
+;; (newtons-method (cubic 1 1 1) 1.0)
+;; -0.999999999999977
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 1.41
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn double [f]
+  (fn [x] (f (f x))))
+
+;; (((double (double double)) inc) 5)
+;; 21
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 1.42
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn compose [f g]
+  (fn [x] (f (g x))))
+
+;; ((compose square inc) 6)
+;; 49
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 1.43
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn repeated [f n]
+  (fn [x]
+    (defn try-it [cntr res]
+      (if (<= cntr 1) 
+        res
+        (recur (dec cntr) (f res))))
+    (try-it n (f x))))
+
+
+;; Same as  above procedure but with loop/recur
+(defn repeated [f n]
+  (fn [x]
+    (loop [cntr n
+           res (f x)]
+      (if (<= cntr 1) 
+        res
+        (recur (dec cntr) (f res))))))
+
+
+;; using compose
+;; Yikes! This definition fails for ((repeated (fn [x] (inc x)) 1000000) 2)
+;; with stack overflow error
+(defn repeated [f n]
+  (loop [cntr n
+         res f]
+    (if (<= cntr 1) 
+      res
+      (recur (dec cntr) (compose f res)))))
+
+
+
+;; recurive definition. This will fail for large values of n as well
+(defn repeated [f n]
+  (if (<= n 1)
+    f
+    (compose f (repeated f (dec n)))))
+
+
+
+;; ((repeated square 2) 5)
+;; 625
+
+;; ((repeated (fn [x] (inc x)) 5) 2)
+;; 7
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 1.44
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def ^:dynamic *dx*  0.0001)
+
+(defn smoothed [f]
+  (fn [x]
+    (/ (+ (f (- x *dx*))
+          (f x)
+          (f (+ x *dx*)))
+       3)))
+
+
+(defn n-fold-smoothed [f n]
+  ((repeated smoothed n) f))
+
+;; sicp.ch1.s3> ((n-fold-smoothed square 5) 4)
+;; 16.000000000003336
+
+(defn n-fold [f1 f2 n]
+  ((repeated f1 n) f2))
+
+(defn apply-twice-add [f]
+  (fn [x] (+ (f x) (f x))))
+
+
+;; ((apply-twice-add (apply-twice-add (apply-twice-add inc))) 2)
+;; 24
+;; sicp.ch1.s3> ((n-fold apply-twice-add inc 3) 2)
+;; 24
+
+
+
+(def ^:dynamic *dx*  0.01)
+
+
+(defn my-inc [x]
+  (println "My-Inc: Applying inc on " x)
+  (inc x))
+
+(defn my-square [x]
+  (println "My-Square: Squaring " x " to produce " (* x x))
+  (* x x))
+
+(defn apply-twice-add [f]
+  (println "Apply-Twice-Add: Called with parameter function: " f)
+  (fn inner-fn [x]
+    (println "Inner-Fn: Applying " f " twice on " x "and adding")
+    (+ (f x) (f x))))
+
+
+(defn smoothed [f]
+  (println "Smoothed: Called with parameter function: " f)
+  (fn mr-smooth [x]
+    (println "Mr-Smooth: Smoothing out " f " on " x )
+    (let [ans (/ (+ (f (- x *dx*))
+                    (f x)
+                    (f (+ x *dx*)))
+                 3)]
+      (println "Mr-Smooth: Smoothed out " f " on " x " with result " ans)
+      ans)))
