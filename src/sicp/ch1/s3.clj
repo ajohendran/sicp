@@ -1037,11 +1037,55 @@
                             1.0))
 
 
+;; OK , we are supposed to use simpler definition as per problem statement
 
+;; cube-root defined earlier
+(defn cube-root [x]
+  (fixed-point (average-damp (fn [y] (/ x (* y y))))
+               1.0))
 
+(defn nth-root [x n]
+  (fixed-point ((repeated average-damp (int (log2 n)))
+                (fn [y] (/ x (Math/pow y (dec n)))))  
+               1.0))
 
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 1.46
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defn iterative-improve [good? improve]
+  (fn [x]
+    (loop [guess x]
+      (if (good? guess)
+        guess
+        (recur (improve guess))))))
+
+
+(def ^:dynamic *tolerance*  0.00001)
+
+(defn square [x]
+  (* x x))
+
+(defn avg [a b]
+  (/ (+ a b) 2.0))
+
+(defn sqrt [n]
+  ((iterative-improve
+     (fn [guess] (< (Math/abs (- (square guess) n))  *tolerance*))
+     (fn [guess] (avg guess (/ n guess))))
+   n))
+
+
+(defn fixed-point [f first-guess]
+  ((iterative-improve
+    (fn [guess] (< (Math/abs (- (f guess) guess)) *tolerance*))
+    f)
+   first-guess))
+
+
+(defn third-root [x]
+  (fixed-point (average-damp (fn [y] (/ x (* y y))))
+               1.0))
