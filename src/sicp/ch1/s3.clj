@@ -670,7 +670,7 @@
 (defn fixed-point [f first-guess]
   (loop [current-guess first-guess
          next-guess (f first-guess)]
-    (println "next-guess: " next-guess)
+  ;;  (println "next-guess: " next-guess)
     (if (< (Math/abs (- next-guess current-guess)) *tolerance*)
       next-guess
       (recur next-guess (f next-guess)))))
@@ -959,6 +959,89 @@
     mr-smooth))
 
 
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 1.45
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defn cube-root [x]
+  (fixed-point-of-transform (fn [y] (/ x (* y y)))
+                            average-damp
+                            1.0))
+
+
+(defn fourth-root [x]
+  (fixed-point-of-transform (fn [y] (/ x (* y y y)))
+                            (compose average-damp average-damp)
+                            1.0))
+
+;; sicp.ch1.s3> (fourth-root 81)
+;; 3.000000000000033
+
+
+(defn fifth-root [x]
+  (fixed-point-of-transform (fn [y] (/ x (* y y y y)))
+                            (repeated average-damp 2)
+                            1.0))
+;; sicp.ch1.s3> (fifth-root 7776)
+;; 5.999999809798113
+
+
+(defn tenth-root [x]
+  (fixed-point-of-transform (fn [y] (/ x (Math/pow y 9)))
+                            (repeated average-damp 3)
+                            1.0))
+;; sicp.ch1.s3> (tenth-root 1032)
+;; 2.0015571464396418
+
+
+(defn twentieth-root [x]
+  (fixed-point-of-transform (fn [y] (/ x (Math/pow y 19)))
+                            (repeated average-damp 4)
+                            1.0))
+;; sicp.ch1.s3> (twentieth-root 1032)
+;; 1.4147640376439723
+;; sicp.ch1.s3> (Math/pow 1.4147643132347993 20)
+;; 1032.005301088158
+
+
+
+(defn fortieth-root [x]
+  (fixed-point-of-transform (fn [y] (/ x (Math/pow y 39)))
+                            (repeated average-damp 5)
+                            1.0))
+
+;; sicp.ch1.s3> (fortieth-root 1032)
+;; 1.1894383546731342
+
+
+;; Ha! This seems to follow 2^m such that is is closest to n
+;; let us test with 64!
+(defn sixtyfourth-root [x]
+  (fixed-point-of-transform (fn [y] (/ x (Math/pow y 64)))
+                            (repeated average-damp 6)
+                            1.0))
+;; Yes, average damp has to be repeated at least 6 times!
+
+
+(defn log2 [x]
+  (/ (Math/log x) (Math/log 2)))
+
+
+;; Answer!!
+(defn nth-root [x n]
+  (fixed-point-of-transform (fn [y] (/ x (Math/pow y (dec n))))
+                            (repeated average-damp (int (log2 n)))
+                            1.0))
+
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 1.46
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
