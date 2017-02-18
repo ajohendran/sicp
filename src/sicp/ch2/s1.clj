@@ -146,14 +146,8 @@
 ;; (def seg-ab (make-segment point-a point-b))
 ;; (print-point (midpoint-segment seg-ab))
 
-;; (def point-a (make-point -2 1))
-;; (def point-b (make-point -1 2))
-;; (def seg-ab (make-segment point-a point-b))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;  Ex 2.3
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+;; Some segment level helper functions
 (defn square [x] (* x x))
 
 (defn x-length-segment [seg]
@@ -164,22 +158,212 @@
   (Math/abs (- (y-point (start-segment seg))
                (y-point (end-segment seg)))))
 
+;; not necesary for this exercise but good to have
 (defn length-segment [seg]
   (Math/sqrt (+ (square (x-length-segment seg))
                 (square (y-length-segment seg)))))
 
-;; First representation is as as two points, the digonal segment
-(defn make-rectangle [diagonal-segment]
-  )
 
-(defn width-rectangle [r])
+;; (def point-a (make-point -7 1))
+;; (def point-b (make-point 1 -5))
+;; (def seg-ab (make-segment point-a point-b))
+;; sicp.ch2.s1> (length-segment seg-ab)
+;; 10.0
 
-(defn height-rect [r])
 
-(defn area-rectangle [r]
-  (* (width-rectangle r) (height-rectangle r)))
 
-(defn perimeter-rectangle [r]
-  (+ (* 2 (width-rectangle r))
-     (* 2 (height-rectangle r))))
 
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.3
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;;;;;;;;; First rectangle representation ;;;;;;;;;
+
+;; First representation is as as two points, essentially the digonal segment
+;; The smaller x value will always come first
+;; though not necessary for this exercise
+(defn make-rectangle [point1 point2]
+  (cond (or (= (x-point point1) (x-point point2))
+            (= (y-point point1) (y-point point2)))
+        (ex-info "Rectangle improperly defined" {point1, point2})
+        (< (x-point point1) (x-point point2))
+        (make-segment point1 point2)
+        :else
+        (make-segment point2 point1)))
+
+(defn width-rectangle [rect]
+  (x-length-segment rect))
+
+(defn height-rectangle [rect]
+  (y-length-segment rect))
+
+(defn left-top-corner-rectangle [rect]
+  (if (> (y-point (start-segment rect))
+         (y-point (end-segment rect)))
+    (start-segment rect)
+    (make-point (x-point (start-segment rect))
+                (+ (height-rectangle rect) (y-point (start-segment rect))))))
+
+;; (def right-bottom-corner (make-point 1 -5))
+;; (def left-top-corner (make-point -7 1))
+;; (def my-rect (make-rectangle right-bottom-corner left-top-corner))
+;; (height-rectangle my-rect)
+;; 6
+;; (width-rectangle my-rect)
+;; 8
+;; (corners-rectangle my-rect)
+;; (((-7 1) (1 1)) ((-7 -5) (1 -5)))
+
+
+;;;;;;;;;;;; Second rectangle representation ;;;;;;;;;;
+
+;; Represented by the upper left corner and width and height
+(defn make-rectangle [left-upper-corner-point, width, height]
+  (make-pair left-upper-corner-point (make-pair width height)))
+
+(defn width-rectangle [rect]
+  (car (cdr rect)))
+
+(defn height-rectangle [rect]
+  (cdr (cdr rect)))
+
+(defn left-top-corner-rectangle [rect]
+  (car rect))
+
+
+;; (def left-top-corner (make-point -7 1))
+;; (def my-rect (make-rectangle left-top-corner 8 6))
+;; (height-rectangle my-rect)
+;; 6
+;; (width-rectangle my-rect)
+;; 8
+;; (corners-rectangle my-rect)
+;; (((-7 1) (1 1)) ((-7 -5) (1 -5)))
+
+;;;;;;;;;;;; Area and Permieter functions  ;;;;;;;;;;
+
+;; these do not chage with representartio
+(defn area-rectangle [rect]
+  (* (width-rectangle rect) (height-rectangle rect)))
+
+(defn perimeter-rectangle [rect]
+  (+ (* 2 (width-rectangle rect))
+     (* 2 (height-rectangle rect))))
+
+
+;; (area-rectangle my-rect)
+;; 48
+;; (perimeter-rectangle my-rect)
+;; 28
+
+
+;; Some additional functions, not asked for in book but illustrates the principles 
+(defn corners-rectangle [rect]
+  (let [width (width-rectangle rect)
+        height (height-rectangle rect)
+        left-top-corner (left-top-corner-rectangle rect)
+        left-bottom-corner (make-point (x-point left-top-corner)
+                                       (- (y-point left-top-corner) height))
+        right-bottom-corner (make-point (+ (x-point left-bottom-corner) width) 
+                                        (y-point left-bottom-corner))
+        right-top-corner (make-point (+ (x-point left-top-corner) width) 
+                                        (y-point left-top-corner))]
+    (make-pair
+     (make-pair left-top-corner right-top-corner)
+     (make-pair left-bottom-corner right-bottom-corner))))
+
+;; clockwise starting from left top corner
+(defn print-rectangle [rect]
+  (let [corners (corners-rectangle rect)]
+    (print-segment (make-segment (car (car corners)) (cdr (car corners))))
+    (print-segment (make-segment (cdr (car corners)) (cdr (cdr corners))))
+    (print-segment (make-segment (cdr (cdr corners)) (car (cdr corners))))
+    (print-segment (make-segment (car (cdr corners)) (car (car corners))))))
+
+;; (print-rectangle my-rect)
+;; [(-7 1),(1 1)]
+;; [(1 1),(1 -5)]
+;; [(1 -5),(-7 -5)]
+;; [(-7 -5),(-7 1)]
+;; nil
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  What Is Meant by Data?
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn make-pair [x y]
+  (fn [m] (cond (= m 0) x
+                (= m 1) y
+                :else (ex-info "Argument not 0 or 1" {}))))
+
+(defn car [p]
+  (p 0))
+
+(defn cdr [p]
+  (p 1))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.4
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defn make-pair [x y]
+  (fn [m] (m x y)))
+
+(defn car [p]
+  (p (fn [a b] a)))
+
+(defn cdr [p]
+  (p (fn [a b] b)))
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.5
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn expt
+  ([b n] (expt b n 1))
+  ([b n a]
+   (cond (< n 1) a
+         (even? n) (recur (* b b) (/ n 2) a)
+         :else (recur b (dec n) (* a b)))))
+
+;; determine how many times a can be repeatedly be divided by b.
+(defn times-divisible-by [a b c]
+  (if (= 0 (rem a b))
+    (recur (/ a b) b (inc c))
+    c))
+
+;; any two co-prime numbers can be used.
+;; Of course, mkes sense to use the smallest available co-prime numbers
+(defn make-pair-i [a b]
+  (* (expt 2 a)
+     (expt 3 b)))
+
+(defn car-i [p]
+  (times-divisible-by p 2 0))
+
+(defn cdr-i [p]
+  (times-divisible-by p 3 0))
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.6
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+(def zero (fn [f] (fn [x] x)))
+
+(defn add-1 [n]
+  (fn [f] (fn [x] (f ((n f) x)))))
