@@ -309,10 +309,10 @@
   (p 1))
 
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Ex 2.4
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 
 (defn make-pair [x y]
   (fn [m] (m x y)))
@@ -329,6 +329,8 @@
 ;;;;  Ex 2.5
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; copied over from chapter 1.
+;; another option would have been to use (long (Math/pow x y))
 (defn expt
   ([b n] (expt b n 1))
   ([b n a]
@@ -336,7 +338,7 @@
          (even? n) (recur (* b b) (/ n 2) a)
          :else (recur b (dec n) (* a b)))))
 
-;; determine how many times a can be repeatedly be divided by b.
+;; determine how many times 'a' can be repeatedly be divided by 'b'.
 (defn times-divisible-by [a b c]
   (if (= 0 (rem a b))
     (recur (/ a b) b (inc c))
@@ -361,9 +363,136 @@
 ;;;;  Ex 2.6
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
-
 (def zero (fn [f] (fn [x] x)))
 
 (defn add-1 [n]
   (fn [f] (fn [x] (f ((n f) x)))))
+
+
+(def one (add-1 zero))
+
+;; (add-1 zero)
+;; (add-1 (fn [f] (fn [x] x)))
+;; ((fn [n] (fn [f] (fn [x] (f ((n f) x)))))
+;;   (fn [f] (fn [x] x)))
+;; (fn [f] (fn [x] (f (((fn [f] (fn [x] x)) f) x))))
+;; (fn [f] (fn [x] (f ((fn [x] x) x))))
+;; (fn [f] (fn [x] (f x)))
+
+;; One -> (fn [f] (fn [x] (f x)))
+
+(def two (add-1 one))
+
+;; (add-1 one)
+;; (add-1 (fn [f] (fn [x] (f x))))
+;; ((fn [n] (fn [f] (fn [x] (f ((n f) x)))))
+;;    (fn [f] (fn [x] (f x))))
+;; (fn [f] (fn [x] (f (((fn [f] (fn [x] (f x))) f) x))))
+;; (fn [f] (fn [x] (f ((fn [x] (f x)) x))))
+;; (fn [f] (fn [x] (f (f x))))
+
+;; Two -> (fn [f] (fn [x] (f (f x))))
+
+
+;; pattern is clear. Going by above
+;; Three -> (fn [f] (fn [x] (f (f (f x)))))
+
+
+;; Zero  -> (fn [f] (fn [x] x))
+;; One   -> (fn [f] (fn [x] (f x)))
+;; Two   -> (fn [f] (fn [x] (f (f x))))
+;; Three -> (fn [f] (fn [x] (f (f (f x)))))
+;; add-1 -> (fn [n] (fn [f] (fn [x] (f ((n f) x)))))
+
+;; Essentially numbers are represented by two functions - outer function with parameter f
+;; that returns an inner function with parameter x
+;; A number's value is represented by how many times parameter to outer function
+;; f is repeatedly applied to parameter of inner function.
+
+
+;; Notice the construction for add-1. It is very similar to one.
+;; At the innermost level, 'one' has (f x), whereas
+;; add-1 has (f ((n f) x))
+
+;; One is represented by one application of outer function parameter f.
+;; So defintion of add-1 makes sense.
+;; Adding one to zero must return one. So (f ((n f) x)) must return (f x).
+;; Adding one to one must return two, that is, (f (f x))
+
+;; So add-two would be (fn [n] (fn [f] (fn [x] (f (f ((n f) x)))))
+
+;; what (n f) does is the key here. It must return the value of the actual
+;; number being added
+
+;; It is easy to see (n f) would just return x for zero and (f x) for one
+;; and (f (f x)) for two and so on
+
+;; When n is zero
+;; ((n f) x) where n is zero
+;; (((fn [f] (fn [x] x)) f) x)
+;; ((fn [x] x) x)
+;; x
+
+;; when n is one
+;; ((n f) x) where n is one
+;; (((fn [f] (fn [x] (f x))) f) x)
+;; ((fn [x] (f x)) x)
+;; (f x)
+
+;; when n is two
+;; ((n f) x) where n is two
+;; (((fn [f] (fn [x] (f (f x)))) f) x)
+;; ((fn [x] (f (f x))) x)
+;; (f (f x))
+
+;; So adding two numbers m and n
+
+(def add-mn
+  (fn [m n] (fn [f] (fn [x] ((m f) ((n f) x))))))
+
+
+;;or
+
+(defn add-mn
+  (fn [f] (fn [x] ((m f) ((n f) x)))))
+
+;; Only difference from add-1 is that inner (f ((n f) x))
+;; has been changed to ((m f) ((n f) x))
+
+
+;; Let us test by adding m->two and n->one
+((fn [m n] (fn [f] (fn [x] ((m f) ((n f) x)))))
+ two
+ one)
+
+;; ((fn [m n] (fn [f] (fn [x] ((m f) ((n f) x)))))
+;;  (fn [f] (fn [x] (f (f x))))
+;;  (fn [f] (fn [x] (f x))))
+
+;; (fn [f] (fn [x] (((fn [f] (fn [x] (f (f x)))) f)
+;;                  (((fn [f] (fn [x] (f x))) f) x))))
+
+;; (fn [f] (fn [x] (((fn [f] (fn [x] (f (f x)))) f)
+;;                  (((fn [f] ) f) x))))
+
+;; (fn [f] (fn [x] (((fn [f] (fn [x] (f (f x)))) f)
+;;                  ((fn [x] (f x)) x))))
+
+;; (fn [f] (fn [x] (((fn [f] (fn [x] (f (f x)))) f)
+;;                  (f x))))
+
+;; (fn [f] (fn [x] ((fn [x] (f (f x))) (f x)))) 
+
+;; (fn [f] (fn [x] (f (f (f x)))))
+
+;; which is three
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Interval Arithmetic
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
