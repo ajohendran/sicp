@@ -490,6 +490,7 @@
 
 
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Ex 2.7
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -508,11 +509,13 @@
 
 
 (defn add-interval [x y]
+  (println "Add" x "to" y)
   (make-interval (+ (lower-bound x) (lower-bound y))
                  (+ (upper-bound x) (upper-bound y))))
 
 
 (defn mul-interval [x y]
+  (println "Mul" x "with" y)
   (let [p1 (* (lower-bound x) (lower-bound y))
         p2 (* (lower-bound x) (upper-bound y))
         p3 (* (upper-bound x) (lower-bound y))
@@ -528,11 +531,103 @@
 
 
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Ex 2.8
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; need to thoroughly test
 
 (defn sub-interval [x y]
-  (make-interval (Math/abs (- (lower-bound x) (lower-bound y)))
-                 (math/abs (- (upper-bound x) (upper-bound y)))))
+  (println "Sub" y "from" x)
+  (make-interval (- (lower-bound x) (upper-bound y))
+                 (- (upper-bound x) (lower-bound y))))
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Interval Arithmetic Test Set
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;; These exercises are not that well defined - a bit confusing
+
+(def i1pp (make-interval 4.5 5.5))
+(def i2pp (make-interval 5.0 7.0))
+
+(def i1nn (make-interval -5.5 -4.5))
+(def i2nn (make-interval -7.0 -5.0))
+
+(def i1pn (make-interval -5.5 4.5))
+(def i2pn (make-interval -7.0 5.0))
+
+(def i1np (make-interval -4.5 5.5))
+(def i2np (make-interval -5.0 7.0))
+
+(doseq [i1 [i1pp i1nn i1pn i1np]
+      i2 [i2pp i2nn i2pn i2np]
+      proc [add-interval mul-interval sub-interval]]
+  (println (proc i1 i2)))
+
+
+(defn show-muls [x y]
+  (let [p1 (* (lower-bound x) (lower-bound y))
+        p2 (* (lower-bound x) (upper-bound y))
+        p3 (* (upper-bound x) (lower-bound y))
+        p4 (* (upper-bound x) (upper-bound y))]
+    (vector p1 p2 p3 p4)))
+
+
+(defn show-adds [x y]
+  (let [p1 (+ (lower-bound x) (lower-bound y))
+        p2 (+ (lower-bound x) (upper-bound y))
+        p3 (+ (upper-bound x) (lower-bound y))
+        p4 (+ (upper-bound x) (upper-bound y))]
+    (vector p1 p2 p3 p4)))
+
+
+(defn show-subs [x y]
+  (let [p1 (- (lower-bound x) (lower-bound y))
+        p2 (- (lower-bound x) (upper-bound y))
+        p3 (- (upper-bound x) (lower-bound y))
+        p4 (- (upper-bound x) (upper-bound y))]
+    (vector p1 p2 p3 p4)))
+
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.9
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.13
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn par1 [r1 r2]
+  (div-interval (mul-interval r1 r2)
+                (add-interval r1 r2)))
+
+
+(defn par2 [r1 r2]
+  (let [one (make-interval 1 1)] 
+    (div-interval one
+                  (add-interval (div-interval one r1)
+                                (div-interval one r2)))))
+
+
+(def i1 (make-interval 6.12 7.48))
+(def i2 (make-interval 4.465 4.935))
+
+;; (par1 i1 i2)
+;; (2.201031010873943 3.4873689182805854)
+;; (par2 i1 i2)
+;; (2.581558809636278 2.97332259363673)
