@@ -453,7 +453,7 @@
 
 ;;or
 
-(defn add-mn
+(defn add-mn [m n]
   (fn [f] (fn [x] ((m f) ((n f) x)))))
 
 ;; Only difference from add-1 is that inner (f ((n f) x))
@@ -495,7 +495,14 @@
 ;;;;  Ex 2.7
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn make-pair [elm1 elm2]
+  (list elm1 elm2)) ;; list will be explained in next section
 
+(defn car [pair]
+  (min (first pair) (second pair)))
+
+(defn cdr [pair]
+  (max (first pair) (second pair)))
 
 (defn make-interval [lb ub]
   (make-pair lb ub))
@@ -566,8 +573,8 @@
 (def i2np (make-interval -5.0 7.0))
 
 (doseq [i1 [i1pp i1nn i1pn i1np]
-      i2 [i2pp i2nn i2pn i2np]
-      proc [add-interval mul-interval sub-interval]]
+  i2 [i2pp i2nn i2pn i2np]
+  proc [add-interval sub-interval]]
   (println (proc i1 i2)))
 
 
