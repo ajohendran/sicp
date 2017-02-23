@@ -31,6 +31,31 @@
 
 
 
+;; (defprotocol Pair
+;;   "Protocol to represent scheme's pair data structure"
+;;   (car [this])
+;;   (cdr [this]))
+
+;; ;; implementation of Pair protocol using as type
+;; (deftype PairType [first second]
+;;   Pair
+;;   (car [_] first)
+;;   (cdr [_] second)
+;;   (toString [_] (str "(" first " . " second ")")))
+
+;; (defn make-pair [elm1 elm2]
+;;   (->PairType elm1 elm2))
+
+;; ;; implementation of Pair protocol as record
+;; (deftype PairRecord [first second]
+;;   Pair
+;;   (car [_] first)
+;;   (cdr [_] second)
+;;   (toString [_] (str "(" first " . " second ")")))
+
+;; (defn make-pair [elm1 elm2]
+;;   (->PairRecord elm1 elm2))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Rational Numbers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -496,16 +521,18 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn make-pair [elm1 elm2]
-  (list elm1 elm2)) ;; list will be explained in next section
+  (list elm1 elm2)) 
 
 (defn car [pair]
-  (min (first pair) (second pair)))
+  (first pair))
 
 (defn cdr [pair]
-  (max (first pair) (second pair)))
+  (second pair))
 
+;; modified from version in book to make sure right object is construced
+;; even if parameters are specified in  wrong order
 (defn make-interval [lb ub]
-  (make-pair lb ub))
+  (make-pair (min lb ub) (max lb ub)))
 
 (defn lower-bound [i]
   (car i))
@@ -543,8 +570,7 @@
 ;;;;  Ex 2.8
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; need to thoroughly test
-
+;; Unlike multiplication we needn't worry about sign here
 (defn sub-interval [x y]
   (println "Sub" y "from" x)
   (make-interval (- (lower-bound x) (upper-bound y))
@@ -572,10 +598,7 @@
 (def i1np (make-interval -4.5 5.5))
 (def i2np (make-interval -5.0 7.0))
 
-(doseq [i1 [i1pp i1nn i1pn i1np]
-  i2 [i2pp i2nn i2pn i2np]
-  proc [add-interval sub-interval]]
-  (println (proc i1 i2)))
+
 
 
 (defn show-muls [x y]
@@ -603,7 +626,12 @@
 
 
 
-
+(doseq [i1 [i1pp i1nn i1pn i1np]
+  i2 [i2pp i2nn i2pn i2np]
+  proc [mul-interval]]
+  (println (proc i1 i2))
+  (println (show-muls i1 i2))
+  (newline))
 
 
 
