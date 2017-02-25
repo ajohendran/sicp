@@ -1,3 +1,4 @@
+
 (ns sicp.ch2.s1)
 
 
@@ -559,6 +560,7 @@
 
 
 (defn div-interval [x y]
+  (println "Div" x "by" y)
   (mul-interval x 
                 (make-interval (/ 1.0 (upper-bound y))
                                (/ 1.0 (lower-bound y)))))
@@ -570,7 +572,7 @@
 ;;;;  Ex 2.8
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Unlike multiplication we needn't worry about sign here
+;; Unlike multiplication we needn't worry about sign here.
 (defn sub-interval [x y]
   (println "Sub" y "from" x)
   (make-interval (- (lower-bound x) (upper-bound y))
@@ -586,58 +588,327 @@
 
 ;; These exercises are not that well defined - a bit confusing
 
-(def i1pp (make-interval 4.5 5.5))
-(def i2pp (make-interval 5.0 7.0))
+;; (def i1pp (make-interval 4.5 5.5))
+;; (def i2pp (make-interval 5.0 7.0))
 
-(def i1nn (make-interval -5.5 -4.5))
-(def i2nn (make-interval -7.0 -5.0))
+;; (def i1nn (make-interval -5.5 -4.5))
+;; (def i2nn (make-interval -7.0 -5.0))
 
-(def i1pn (make-interval -5.5 4.5))
-(def i2pn (make-interval -7.0 5.0))
+;; (def i1pn (make-interval -5.5 4.5))
+;; (def i2pn (make-interval -7.0 5.0))
 
-(def i1np (make-interval -4.5 5.5))
-(def i2np (make-interval -5.0 7.0))
-
-
+;; (def i1np (make-interval -4.5 5.5))
+;; (def i2np (make-interval -5.0 7.0))
 
 
-(defn show-muls [x y]
-  (let [p1 (* (lower-bound x) (lower-bound y))
-        p2 (* (lower-bound x) (upper-bound y))
-        p3 (* (upper-bound x) (lower-bound y))
-        p4 (* (upper-bound x) (upper-bound y))]
-    (vector p1 p2 p3 p4)))
+;; (defn show-muls [x y]
+;;   (let [p1 (* (lower-bound x) (lower-bound y))
+;;         p2 (* (lower-bound x) (upper-bound y))
+;;         p3 (* (upper-bound x) (lower-bound y))
+;;         p4 (* (upper-bound x) (upper-bound y))]
+;;     (vector p1 p2 p3 p4)))
 
 
-(defn show-adds [x y]
-  (let [p1 (+ (lower-bound x) (lower-bound y))
-        p2 (+ (lower-bound x) (upper-bound y))
-        p3 (+ (upper-bound x) (lower-bound y))
-        p4 (+ (upper-bound x) (upper-bound y))]
-    (vector p1 p2 p3 p4)))
+;; (defn show-adds [x y]
+;;   (let [p1 (+ (lower-bound x) (lower-bound y))
+;;         p2 (+ (lower-bound x) (upper-bound y))
+;;         p3 (+ (upper-bound x) (lower-bound y))
+;;         p4 (+ (upper-bound x) (upper-bound y))]
+;;     (vector p1 p2 p3 p4)))
 
 
-(defn show-subs [x y]
-  (let [p1 (- (lower-bound x) (lower-bound y))
-        p2 (- (lower-bound x) (upper-bound y))
-        p3 (- (upper-bound x) (lower-bound y))
-        p4 (- (upper-bound x) (upper-bound y))]
-    (vector p1 p2 p3 p4)))
+;; (defn show-subs [x y]
+;;   (let [p1 (- (lower-bound x) (lower-bound y))
+;;         p2 (- (lower-bound x) (upper-bound y))
+;;         p3 (- (upper-bound x) (lower-bound y))
+;;         p4 (- (upper-bound x) (upper-bound y))]
+;;     (vector p1 p2 p3 p4)))
 
 
 
-(doseq [i1 [i1pp i1nn i1pn i1np]
-  i2 [i2pp i2nn i2pn i2np]
-  proc [mul-interval]]
-  (println (proc i1 i2))
-  (println (show-muls i1 i2))
-  (newline))
+;; (doseq [i1 [i1pp i1nn i1pn i1np]
+;;   i2 [i2pp i2nn i2pn i2np]
+;;   proc [sub-interval]]
+;;   (println (proc i1 i2))
+;;   (println (show-subs i1 i2))
+;;   (newline))
+
+;; (doseq [i1 [[3 4]]
+;;   i2 [[-5 -4]]
+;;   proc [sub-interval]]
+;;   (println (proc i1 i2))
+;;   (println (show-subs i1 i2))
+;;   (newline))
 
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Ex 2.9
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn width-interval [i]
+  (/ (- (upper-bound i) (lower-bound i)) 2.0))
+
+;; Consider two intervals (a . b) and (c . d)
+;; a < b and c < d
+;; Widths are (b-a)/2 and (d-c)/2. Let's call them m and n.
+;; That is m -> (b-a)/2 and n -> (d-c)/2
+
+;; Addition yields (a+c . b+d). Width would be ((b+d) - (a+c))/2
+;; ((b-a) + (d-c))/2
+;; (b-a)/2 + (d-c)/2
+;; m + n
+
+;; Subtraction yields (a-d . b-c). Width would be ((b-c) - (a-d))/2
+;; ((b-a) + (d-c))/2
+;; (b-a)/2 + (d-c)/2
+;; m + n
+
+
+
+;; Examples for Addition
+
+;; Add (4.5 5.5) to (5.0 7.0)
+;; (9.5 12.5)
+;; widths: 0.5 1.0 1.5
+
+;; Add (4.5 5.5) to (-7.0 -5.0)
+;; (-2.5 0.5)
+;; widths: 0.5 1.0 1.5
+
+;; Add (4.5 5.5) to (-7.0 5.0)
+;; (-2.5 10.5)
+;; widths: 0.5 6.0 6.5
+
+;; Add (4.5 5.5) to (-5.0 7.0)
+;; (-0.5 12.5)
+;; widths: 0.5 6.0 6.5
+
+;; Add (-5.5 -4.5) to (5.0 7.0)
+;; (-0.5 2.5)
+;; widths: 0.5 1.0 1.5
+
+;; Add (-5.5 4.5) to (-7.0 5.0)
+;; (-12.5 9.5)
+;; widths: 5.0 6.0 11.0
+
+;; Add (-5.5 4.5) to (-5.0 7.0)
+;; (-10.5 11.5)
+;; widths: 5.0 6.0 11.0
+
+;; Add (-4.5 5.5) to (5.0 7.0)
+;; (0.5 12.5)
+;; widths: 5.0 1.0 6.0
+;; Add (-4.5 5.5) to (-7.0 -5.0)
+
+
+
+;; Examples for Subtraction
+
+
+;; Sub (5.0 7.0) from (4.5 5.5)
+;; (-2.5 0.5)
+;; widths: 0.5 1.0 1.5
+
+;; Sub (-7.0 -5.0) from (4.5 5.5)
+;; (9.5 12.5)
+;; widths: 0.5 1.0 1.5
+
+;; Sub (-7.0 5.0) from (4.5 5.5)
+;; (-0.5 12.5)
+;; widths: 0.5 6.0 6.5
+
+;; Sub (-5.0 7.0) from (4.5 5.5)
+;; (-2.5 10.5)
+;; widths: 0.5 6.0 6.5
+
+;; Sub (5.0 7.0) from (-5.5 -4.5)
+;; (-12.5 -9.5)
+;; widths: 0.5 1.0 1.5
+
+;; Sub (-7.0 -5.0) from (-5.5 -4.5)
+;; (-0.5 2.5)
+;; widths: 0.5 1.0 1.5
+
+;; Sub (-7.0 5.0) from (-5.5 -4.5)
+;; (-10.5 2.5)
+;; widths: 0.5 6.0 6.5
+
+;; Sub (-7.0 -5.0) from (-4.5 5.5)
+;; (0.5 12.5)
+;; widths: 5.0 1.0 6.0
+
+;; Sub (-7.0 5.0) from (-4.5 5.5)
+;; (-9.5 12.5)
+;; widths: 5.0 6.0 11.0
+
+;; Sub (-5.0 7.0) from (-4.5 5.5)
+;; (-11.5 10.5)
+;; widths: 5.0 6.0 11.0
+
+
+
+
+;; Examples for Multiplication
+
+;; Mul (4.5 5.5) with (5.0 7.0)
+;; (22.5 38.5)
+;; widths: 0.5 1.0 8.0
+
+;; Mul (4.5 5.5) with (-7.0 -5.0)
+;; (-38.5 -22.5)
+;; widths: 0.5 1.0 8.0
+
+;; Mul (4.5 5.5) with (-7.0 5.0)
+;; (-38.5 27.5)
+;; widths: 0.5 6.0 33.0
+
+;; Mul (4.5 5.5) with (-5.0 7.0)
+;; (-27.5 38.5)
+;; widths: 0.5 6.0 33.0
+
+;; Mul (-5.5 -4.5) with (5.0 7.0)
+;; (-38.5 -22.5)
+;; widths: 0.5 1.0 8.0
+
+;; Mul (-5.5 4.5) with (-5.0 7.0)
+;; (-38.5 31.5)
+;; widths: 5.0 6.0 35.0
+
+;; Mul (-4.5 5.5) with (5.0 7.0)
+;; (-31.5 38.5)
+;; widths: 5.0 1.0 35.0
+
+;; Mul (-4.5 5.5) with (-7.0 -5.0)
+;; (-38.5 31.5)
+;; widths: 5.0 1.0 35.0
+
+;; Mul (-4.5 5.5) with (-7.0 5.0)
+;; (-38.5 31.5)
+;; widths: 5.0 6.0 35.0
+
+;; Mul (-4.5 5.5) with (-5.0 7.0)
+;; (-31.5 38.5)
+;; widths: 5.0 6.0 35.0
+
+
+
+;; Examples for Division
+
+;; Div (4.5 5.5) by (5.0 7.0)
+;; Mul (4.5 5.5) with (0.14285714285714285 0.2)
+;; (0.6428571428571428 1.1)
+;; widths: 0.5 1.0 0.22857142857142865
+
+;; Div (4.5 5.5) by (-7.0 -5.0)
+;; Mul (4.5 5.5) with (-0.2 -0.14285714285714285)
+;; (-1.1 -0.6428571428571428)
+;; widths: 0.5 1.0 0.22857142857142865
+
+;; Div (4.5 5.5) by (5.0 7.0)
+;; Mul (4.5 5.5) with (0.14285714285714285 0.2)
+;; (0.6428571428571428 1.1)
+;; widths: 0.5 1.0 0.22857142857142865
+
+;; Div (4.5 5.5) by (-7.0 -5.0)
+;; Mul (4.5 5.5) with (-0.2 -0.14285714285714285)
+;; (-1.1 -0.6428571428571428)
+;; widths: 0.5 1.0 0.22857142857142865
+
+;; Div (4.5 5.5) by (-7.0 5.0)
+;; Mul (4.5 5.5) with (-0.14285714285714285 0.2)
+;; (-0.7857142857142857 1.1)
+;; widths: 0.5 6.0 0.9428571428571428
+
+;; Div (4.5 5.5) by (-5.0 7.0)
+;; Mul (4.5 5.5) with (-0.2 0.14285714285714285)
+;; (-1.1 0.7857142857142857)
+;; widths: 0.5 6.0 0.9428571428571428
+
+;; Div (-5.5 -4.5) by (5.0 7.0)
+;; Mul (-5.5 -4.5) with (0.14285714285714285 0.2)
+;; (-1.1 -0.6428571428571428)
+;; widths: 0.5 1.0 0.22857142857142865
+
+;; Div (-5.5 -4.5) by (-7.0 -5.0)
+;; Mul (-5.5 -4.5) with (-0.2 -0.14285714285714285)
+;; (0.6428571428571428 1.1)
+;; widths: 0.5 1.0 0.22857142857142865
+
+;; Div (-4.5 5.5) by (5.0 7.0)
+;; Mul (-4.5 5.5) with (0.14285714285714285 0.2)
+;; (-0.9 1.1)
+;; widths: 5.0 1.0 1.0
+
+;; Div (-4.5 5.5) by (-7.0 -5.0)
+;; Mul (-4.5 5.5) with (-0.2 -0.14285714285714285)
+;; (-1.1 0.9)
+;; widths: 5.0 1.0 1.0
+
+
+
+;; (doseq [i1 [i1pp i1nn i1pn i1np]
+;;         i2 [i2pp i2nn i2pn i2np]
+;;         proc [mul-interval]]
+;;   (let [res (proc i1 i2)]
+;;     (println res)
+;;     (println "widths:" (width-interval i1) (width-interval i2) (width-interval res))
+;;     (newline)))
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.10
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn zero-spanning? [i]
+  (and (neg? (lower-bound i)) (pos? (upper-bound i))))
+
+
+
+(defn div-interval [x y]
+  (println "Div" x "by" y)
+  (if (or (zero? (upper-bound y))
+          (zero? (lower-bound y))
+          (zero-spanning? y))
+    (throw (RuntimeException. "Divisor Interval spans zero")))
+  (mul-interval x 
+                (make-interval (/ 1.0 (upper-bound y))
+                               (/ 1.0 (lower-bound y)))))
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.11
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn mul-interval [x y]
+  (println "Mul" x "with" y)
+  (let [p1 (* (lower-bound x) (lower-bound y))
+        p2 (* (lower-bound x) (upper-bound y))
+        p3 (* (upper-bound x) (lower-bound y))
+        p4 (* (upper-bound x) (upper-bound y))]
+    (make-interval (min p1 p2 p3 p4)
+                   (max p1 p2 p3 p4))))
+
+
+(defn )
+(defn mul-interval [x y]
+  (let [xl (lower-bound x)
+        xu (upper-bound x)
+        yl (lower-bound y)
+        yu (upper-bound y)]
+    (cond
+      (and (pos? xl) (pos? yl)) (make-interval (* xl yl) (* xu yu))
+      (and (neg? xu) (neg? yu)) (make-interval (* xl yl) (* xu yu))
+      (and (pos? xl) (neg? yu)) (make-interval (* xu yu) (* xl yl))
+      (and (neg? xu) (pos? yl)) (make-interval (* xu yu) (* xl yl))
+      )))
 
 
 
@@ -659,8 +930,9 @@
                                 (div-interval one r2)))))
 
 
-(def i1 (make-interval 6.12 7.48))
-(def i2 (make-interval 4.465 4.935))
+;(def i1 (make-interval 6.12 7.48))
+;(def i2 (make-interval 4.465 4.935))
+
 
 ;; (par1 i1 i2)
 ;; (2.201031010873943 3.4873689182805854)
