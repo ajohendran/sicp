@@ -934,8 +934,8 @@
 
 
 
-(def ti1 (make-center-percent 10 1))
-(def ti2 (make-center-percent 50 2))
+;(def ti1 (make-center-percent 10 1))
+; (def ti2 (make-center-percent 50 2))
 
 
 ;; sicp.ch2.s1> (percent-interval (mul-interval (make-center-percent 100 0.05)
@@ -998,7 +998,7 @@
   (let [one (make-interval 1 1)] 
     (div-interval one
                   (add-interval (div-interval one r1)
-                                (div-interval one r2))))))
+                                (div-interval one r2)))))
 
 ;; Using the resistor values given in the beginning of the exercise,
 ;; (def r1 (make-center-percent 6.8 10.0))
@@ -1020,6 +1020,8 @@
 ;; 19.77777777777778
 ;; (r1*r2)/r2 is algebraically quivalent to r1, but both center and tolerance are off
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 ;; (def A (make-center-percent 100 0.1))
 ;; (def B (make-center-percent 50 0.2))
@@ -1040,6 +1042,8 @@
 ;; Even though we would expect A/A to produce 1, the actual result
 ;; is different and has a higher tolerance than initial starting point
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 ;; A
@@ -1072,6 +1076,7 @@
 ;; Mul (99.9 100.1) with (0.01996007984031936 0.02004008016032064)
 ;; the tolerances got added
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; A
 ;; (99.9 100.1)
@@ -1105,6 +1110,7 @@
 ;; The end result has higher width and tolerance than A
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; (A+B) * (A-B) is algebraically equivalent to A^2 - B^2
 
@@ -1186,3 +1192,72 @@
 ;; 0.399998400006409
 ;; (width-interval B-mul-B)
 ;; 10.000000000000227
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;Testing with (* C C) and (+ C C C), where C is 3
+
+;; (def C (make-center-percent 3 0.1))
+
+;; (def C-sq (mul-interval C C))
+;; C-sq
+;; (8.982009 9.018009000000001)
+;; (center-interval C-sq)
+;; 9.000009
+;; (percent-interval C-sq)
+;; 0.19999980000020756
+;; (width-interval C-sq)
+;; 0.018000000000000682
+
+;; (def CaddCaddC (add-interval C (add-interval C C)))
+;; CaddCaddC
+;; (8.991 9.009)
+;; (center-interval CaddCaddC)
+;; 9.0
+;; (percent-interval CaddCaddC)
+;; 0.1000000000000038
+;; (width-interval CaddCaddC)
+;; 0.009000000000000341
+
+
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.15
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Eva Lu Ator is right. Each operation involving an interval ALWAYS increases the
+;; tolerance/uncertainty. With par2, even though it involves more operations,
+;; 1 is reprsented as (1 . 1) with no uncertainty at all and that will keep the
+;; tolerances tighter.
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.16
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;; Answering the why? part
+
+;; (1) Equivlent algebraic expressions may involve different number of arithmetic operations
+;; Each arithmetic operation adds to uncertainty.
+
+;; (2) Addition/Subtraction creates a different level of uncertainty
+;; from multiplication/division. Equivalent aLgebraic expressions may be written in terms
+;; of more additions/subtractions and less multiplications/divisions and vice-versa. So with
+;; the end result, the uncertainty is different depending on how we arrived there.
+
+
+;; Not attempting the second part. Lots of research papers and discuasion out there regarding
+;; interval arithmetic
+;; See the bexcellent article 'A Lucid Interval' by Brian Hayes on Scientific American.
+
