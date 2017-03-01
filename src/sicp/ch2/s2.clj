@@ -222,15 +222,6 @@
 ;;;;  Ex 2.21
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
-(define (square-list items)
-  (if (null? items)
-      nil
-      (cons <??> <??>)))
-
-(define (square-list items)
-  (map <??> <??>))
-
 (defn square [n] (* n n))
 
 (defn square-list [items]
@@ -720,7 +711,7 @@
     true))
 
 
-;; The problem with above solutions is thet
+;; The problem with above solutions is that
 ;; they walk down the tree several times - once when computing torque
 ;; and then again when checking for balance of sub-mobile
 ;; See trace below
@@ -873,8 +864,91 @@
 
 ;;;;;; d ;;;;;;;
 
-;;Changing constructors would only mean, changing the corresponding selectors
+;;Changing constructors would only mean changing the corresponding selectors
 
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Mapping Over Trees
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn scale-tree [tree factor]
+  (cond (nil? tree) (list)
+        (seq? tree) (cons (scale-tree (first tree) factor) 
+                          (scale-tree (next tree) factor))
+        :else (* factor tree)))
+
+;; (def x (list 1 (list 2 (list 3 4) 5) (list 6 7)))
+
+
+(defn scale-tree [tree factor]
+  (let [inner-fn (fn [subt]
+                    (if (seq? subt)
+                      (scale-tree subt factor)
+                      (* factor subt)))]
+    (map inner-fn tree))
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 2.30
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn square [n] (* n n))
+
+(defn square-tree [tree]
+  (cond (nil? tree) (list)
+        (not (seq? tree)) (square tree)
+        :else (cons (square-tree (first tree)) (square-tree (next tree))))) 
+        
+
+(defn square-tree [tree]
+  (let [inner-fn (fn [subtree]
+                    (if (seq? subtree)
+                      (square-tree subtree)
+                      (square subtree)))]
+      (map inner-fn tree))
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 2.31
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn tree-map [proc tree]
+  (let [inner-fn (fn [subtree]
+                    (if (seq? subtree)
+                      (tree-map proc subtree)
+                      (proc subtree)))]
+      (map inner-fn tree))
+
+x
+(1 (2 (3 4) 5) (6 7))
+
+(tree-map square x)
+(1 (4 (9 16) 25) (36 49))
+
+(tree-map (fn [n] (* 3 n)) x)
+(3 (6 (9 12) 15) (18 21))
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 2.32
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; (1 2 3)
+;; (() (3) (2) (2 3) (1) (1 3) (1 2) (1 2 3))
+
+(defn subsets [s]
+  (cond (or (nil? s) (empty? s)) (list)
+        (not (seq? s)) s
+        :else (cons (subsets (next s)) (list (first s)))))
 
 
 
