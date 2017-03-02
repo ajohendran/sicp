@@ -49,8 +49,8 @@
    (length items 0))
   ([items n]
    (if (empty? items)
-    n
-    (recur (next items) (inc n)))))
+     n
+     (recur (next items) (inc n)))))
 
 (def odds (list 1 3 5 7))
 
@@ -176,8 +176,8 @@
 (defn cc [amount coin-values]
   (cond  (or (< amount 0) (no-more? coin-values)) 0
          (= amount 0) 1
-        :else (+ (cc amount (except-first-denomination coin-values))
-                 (cc (- amount (first-denomination coin-values)) coin-values))))
+         :else (+ (cc amount (except-first-denomination coin-values))
+                  (cc (- amount (first-denomination coin-values)) coin-values))))
 ;; sicp.ch2.s2> (cc 100 us-coins)
 ;; 292
 ;; sicp.ch2.s2> (cc 100 uk-coins)
@@ -387,8 +387,8 @@
    (revrs l (list)))
   ([l ans]
    (if (empty? l)
-    ans
-    (revrs (next l) (cons (first l) ans)))))
+     ans
+     (revrs (next l) (cons (first l) ans)))))
 
 ;; (revrs x)
 ;; ((3 4) (1 2))
@@ -448,7 +448,7 @@
         (seq? elem) (append (fringe (first elem)) (fringe (next elem)))
         :else (list elem)))
 
- 
+
 ;; this approach more is for when the result is added to seq supplied as param
 ;; compare this to procedure deep-revrs defined above for Ex 2.27
 (defn fringe
@@ -885,10 +885,10 @@
 
 (defn scale-tree [tree factor]
   (let [inner-fn (fn [subt]
-                    (if (seq? subt)
-                      (scale-tree subt factor)
-                      (* factor subt)))]
-    (map inner-fn tree))
+                   (if (seq? subt)
+                     (scale-tree subt factor)
+                     (* factor subt)))]
+    (map inner-fn tree)))
 
 
 
@@ -903,14 +903,14 @@
   (cond (nil? tree) (list)
         (not (seq? tree)) (square tree)
         :else (cons (square-tree (first tree)) (square-tree (next tree))))) 
-        
+
 
 (defn square-tree [tree]
   (let [inner-fn (fn [subtree]
-                    (if (seq? subtree)
-                      (square-tree subtree)
-                      (square subtree)))]
-      (map inner-fn tree))
+                   (if (seq? subtree)
+                     (square-tree subtree)
+                     (square subtree)))]
+    (map inner-fn tree)))
 
 
 
@@ -921,19 +921,19 @@
 
 (defn tree-map [proc tree]
   (let [inner-fn (fn [subtree]
-                    (if (seq? subtree)
-                      (tree-map proc subtree)
-                      (proc subtree)))]
-      (map inner-fn tree))
+                   (if (seq? subtree)
+                     (tree-map proc subtree)
+                     (proc subtree)))]
+    (map inner-fn tree)))
 
-x
-(1 (2 (3 4) 5) (6 7))
+;; x
+;; (1 (2 (3 4) 5) (6 7))
 
-(tree-map square x)
-(1 (4 (9 16) 25) (36 49))
+;; (tree-map square x)
+;; (1 (4 (9 16) 25) (36 49))
 
-(tree-map (fn [n] (* 3 n)) x)
-(3 (6 (9 12) 15) (18 21))
+;; (tree-map (fn [n] (* 3 n)) x)
+;; (3 (6 (9 12) 15) (18 21))
 
 
 
@@ -942,13 +942,45 @@ x
 ;;; Ex 2.32
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
+;; 3 elements
 ;; (1 2 3)
 ;; (() (3) (2) (2 3) (1) (1 3) (1 2) (1 2 3))
 
+
+;; There seems to be a jump in sequence (1 2 3) -> (2 3) -> (3) -> ()
+;; This signifies there is a recursive call to subsets with (rest s)
+
+;; So, for 4 elements
+;; (1 2 3 4)
+;; (1 2 3) (1 2 4) (1 3 4)
+;; (1 2) (1 3) (1 4)
+;; (1)
+;; then
+;; (2 3 4)
+;; (2 3) (2 4)
+;; (2)
+;; then
+;; (3 4)
+;; (3)
+;; then
+;; (4)
+;; ()
+
+;; Notice that as we go up from bottom, each upper level (seperated  by "then" )
+;; is just a cons of (first s) of the the elemente below
+                                        
+;; Quite a brilliant algorithm
+
 (defn subsets [s]
-  (cond (or (nil? s) (empty? s)) (list)
-        (not (seq? s)) s
-        :else (cons (subsets (next s)) (list (first s)))))
+  (if (nil? s)
+    (list (list))
+    (let [remaining (subsets (next s))]
+      (append remaining (map (fn [l] (cons (first s) l)) remaining)))))
 
 
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 2.33
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
