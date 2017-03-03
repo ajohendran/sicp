@@ -982,5 +982,75 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Ex 2.33
+;;; Sequence Operations
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn map-e [proc s]
+  (if (nil? s)
+    (list)
+    (cons (proc (first s)) (map-e proc (next s))))
+
+(defn filter-e [pred s]
+  (cond (nil? s) (list)
+        (pred (first s)) (cons (first s) (filter-e pred (next s)))
+        :else (filter-e pred (next s))))
+        
+(defn accumulate [op initial s]
+ (if (empty? s)
+   initial
+   (op (first s) (accumulate op initial (next s)))
+
+(defn enumerate-interval [low high]
+  (if (> low high)
+    (list)
+    (cons low (enumerate-interval (inc low) high))
+    
+(defn enumerate-tree [tree]
+  (cond (empty? tree) (list)
+        (not (seq? tree)) (list tree)
+        :else (append (enumerate-tree (first tree)) 
+                    (enumerate-tree (next tree)))))
+
+(defn sum-odd-squares [tree]
+  (accumulate +
+              0
+              (map-e square
+                     (filter-e odd?
+                        (enumerate-tree tree)))))
+ 
+(defn fib
+  ([n] (fib 1 0 0 1 n))
+  ([a b p q c]
+   (cond (= c 0) b
+         (even? c) (fib a
+                        b
+                        (+ (* p p) (* q q))
+                        (+ (* p q) (* q q) (* q p))
+                        (/ c 2))
+         :else (fib (+ (* b q) (* a q) (* a p))
+                    (+ (* b p) (* a q))
+                    p
+                    q
+                    (dec c)))))
+
+ 
+(defn even-fibs [n]
+  (filter-e even?
+            (map-e fib
+                   (enumerate-interval 1 n))))
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 2.33
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defn map-e [p s]
+  (accumulate (fn [e l] (cons (p e) l)) (list) s))
+  
+(defn append [seq1 seq1]
+  (accumulate ))
