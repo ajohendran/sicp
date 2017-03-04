@@ -969,7 +969,7 @@
 
 ;; Notice that as we go up from bottom, each upper level (seperated  by "then" )
 ;; is just a cons of (first s) of the the elemente below
-                                        
+
 ;; Quite a brilliant algorithm
 
 (defn subsets [s]
@@ -988,36 +988,36 @@
 (defn map-e [proc s]
   (if (nil? s)
     (list)
-    (cons (proc (first s)) (map-e proc (next s))))
+    (cons (proc (first s)) (map-e proc (next s)))))
 
 (defn filter-e [pred s]
   (cond (nil? s) (list)
         (pred (first s)) (cons (first s) (filter-e pred (next s)))
         :else (filter-e pred (next s))))
-        
+
 (defn accumulate [op initial s]
- (if (empty? s)
-   initial
-   (op (first s) (accumulate op initial (next s)))
+  (if (empty? s)
+    initial
+    (op (first s) (accumulate op initial (next s)))))
 
 (defn enumerate-interval [low high]
   (if (> low high)
     (list)
-    (cons low (enumerate-interval (inc low) high))
-    
+    (cons low (enumerate-interval (inc low) high))))
+
 (defn enumerate-tree [tree]
   (cond (empty? tree) (list)
         (not (seq? tree)) (list tree)
         :else (append (enumerate-tree (first tree)) 
-                    (enumerate-tree (next tree)))))
+                      (enumerate-tree (next tree)))))
 
 (defn sum-odd-squares [tree]
   (accumulate +
               0
               (map-e square
                      (filter-e odd?
-                        (enumerate-tree tree)))))
- 
+                               (enumerate-tree tree)))))
+
 (defn fib
   ([n] (fib 1 0 0 1 n))
   ([a b p q c]
@@ -1033,7 +1033,7 @@
                     q
                     (dec c)))))
 
- 
+
 (defn even-fibs [n]
   (filter-e even?
             (map-e fib
@@ -1049,8 +1049,22 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(defn map-e [p s]
-  (accumulate (fn [e l] (cons (p e) l)) (list) s))
-  
-(defn append [seq1 seq1]
-  (accumulate ))
+(defn map-e [proc sequence]
+  (accumulate (fn [elmnt lst] (cons (proc elmnt) lst)) (list) sequence))
+
+
+(defn append [seq1 seq2]
+  (accumulate cons seq2 seq1))
+
+(defn length [sequence]
+  (accumulate (fn [elmnt res] (inc res)) 0 sequence))
+
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 2.33
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
