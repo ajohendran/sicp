@@ -1066,5 +1066,298 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Ex 2.33
+;;; Ex 2.34
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defn horner-eval [x coeffs-seq]
+  (accumulate
+   (fn [coeff higher-terms] (+ coeff (* x higher-terms)))
+   0
+   coeffs-seq))
+
+;; 1 + 3x + 5x3 + x5 at x = 2 
+(horner-eval 2 (list 1 3 0 5 0 1))
+(horner-eval 2 (list 1 3 0 5))
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 2.35
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defn count-leaves [t]
+  (accumulate
+   +
+   0
+   (map-e (fn [x] (if (seq? x) (count-leaves x) 1))
+          t)))
+
+;; (def x (list 1 2 (list 3 4) (list 5 6) 7))
+
+;; x
+;; (1 2 (3 4) (5 6) 7)
+;; (count-leaves x)
+;; 7
+
+;; (length (list x x))
+;; 2
+;; (count-leaves (list x x))
+;; 14
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 2.36
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defn accumulate-n [op init seqs]
+  (if (empty? (first seqs))
+    (list)
+    (cons (accumulate op init (map first seqs))
+          (accumulate-n op init (map next seqs)))))
+
+
+;; (def s (list (list 1 2 3) (list 4 5 6) (list 7 8 9) (list 10 11 12)))
+
+;; s
+;; ((1 2 3) (4 5 6) (7 8 9) (10 11 12))
+
+;; (accumulate-n + 0 s)
+;; (22 26 30)
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 2.37
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def mat (list (list 1 2 3 4) (list 4 5 6 6) (list 6 7 8 9)))
+
+;; mat
+;; => ((1 2 3 4) (4 5 6 6) (6 7 8 9))
+
+
+(defn dot-product [v w]
+  (accumulate + 0 (map * v w)))
+
+;; (dot-product (list 1 2 3 4) (list 4 5 6 6))
+;; => 56
+
+
+
+(defn matrix-*-vector [m v]
+  (map (fn [w] (dot-product w v)) m))
+
+;; (matrix-*-vector mat (list 1 2 3 4))
+;; => (30 56 80)
+
+
+(defn transpose [mat]
+  (accumulate-n cons (list) mat))
+
+;; (transpose mat)
+;; => ((1 4 6) (2 5 7) (3 6 8) (4 6 9))
+
+
+(defn matrix-*-matrix [m n]
+  (let [cols (transpose n)]
+    (map (fn [v] (matrix-*-vector cols v)) m)))
+
+;; (def mat-A (list (list -0 4 -2) (list -4 -3 0)))
+;; (def mat-B (list (list 0 1) (list 1 -1) (list 2 3)))
+
+;; mat-A
+;; ((0 4 -2) (-4 -3 0))
+
+;; mat-B
+;; ((0 1) (1 -1) (2 3))
+
+;; (matrix-*-matrix mat-A mat-B)
+;; ((0 -10) (-3 -1))
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 2.38
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; abbreviating fold-right and fold-left to foldr and foldl respectively
+
+(defn foldr [op init s]
+  (if (empty? s)
+    init
+    (op (first s) (foldr op init (next s)))))
+
+(defn foldl [op init s]
+  (loop [res init
+         remaining s]
+    (if (empty? remaining)
+      res
+      (recur (op res (first remaining))
+             (next remaining)))))
+
+
+;; (foldr / 1 (list 1 2 3))
+;; => 3/2
+
+;; (foldl / 1 (list 1 2 3))
+;; => 1/6
+
+;; (foldr list (list) (list 1 2 3))
+;; => (1 (2 (3 ())))
+
+;; (foldl list (list) (list 1 2 3))
+;; => (((() 1) 2) 3)
+
+;; For foldl and foldr to produce same result,
+;; op should be associative,
+;; (a + b) + c = a + (b + c)
+
+
+;; sicp.ch2.s2> (foldl append (list) (list (list 1) (list 2) (list 3) (list 4) (list 5)))
+;; TRACE t10846: (sicp.ch2.s2/append () (1))
+;; TRACE t10846: => (1)
+;; TRACE t10847: (sicp.ch2.s2/append (1) (2))
+;; TRACE t10847: => (1 2)
+;; TRACE t10848: (sicp.ch2.s2/append (1 2) (3))
+;; TRACE t10848: => (1 2 3)
+;; TRACE t10849: (sicp.ch2.s2/append (1 2 3) (4))
+;; TRACE t10849: => (1 2 3 4)
+;; TRACE t10850: (sicp.ch2.s2/append (1 2 3 4) (5))
+;; TRACE t10850: => (1 2 3 4 5)
+;; (1 2 3 4 5)
+
+
+;; sicp.ch2.s2> (foldr append (list) (list (list 1) (list 2) (list 3) (list 4) (list 5)))
+;; TRACE t10853: (sicp.ch2.s2/append (5) ())
+;; TRACE t10853: => (5)
+;; TRACE t10854: (sicp.ch2.s2/append (4) (5))
+;; TRACE t10854: => (4 5)
+;; TRACE t10855: (sicp.ch2.s2/append (3) (4 5))
+;; TRACE t10855: => (3 4 5)
+;; TRACE t10856: (sicp.ch2.s2/append (2) (3 4 5))
+;; TRACE t10856: => (2 3 4 5)
+;; TRACE t10857: (sicp.ch2.s2/append (1) (2 3 4 5))
+;; TRACE t10857: => (1 2 3 4 5)
+;; (1 2 3 4 5)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 2.39
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn revrs [s]
+  (foldr (fn [e l] (append l (list e))) (list) s))
+
+(revrs (list 1 2 3 4 5))
+;; => (5 4 3 2 1)
+
+
+
+(defn revrs [s]
+  (foldl (fn [l e] (cons e l)) (list) s))
+
+;; (revrs (list 1 2 3 4 5))
+;; => (5 4 3 2 1)
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Nested Mappings
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;;;;;  Prime ;;;;;;;;;
+(defn square [n]
+  (* n n))
+
+;; could be made a tad bit more efficient by introducing another function.
+;; for purposes of illustration and for maintaining clarity, leaving as is
+(defn check-non-trivial-sqrt [result m]
+  (cond
+    (= result (dec m)) (rem (square result) m)
+    (= result 1) (rem (square result) m)
+    (= (rem (square result) m) 1) 0 
+    :else (rem (square result) m)))
+
+(defn expmod-mr [base exp m]
+  (cond 
+    (= exp 1) base
+    (even? exp) (check-non-trivial-sqrt
+                 (expmod-mr base (/ exp 2) m)
+                 m)
+    :else (rem (* base (expmod-mr base (dec exp) m)) m)))
+
+
+(defn miller-rabin-test [n]
+  (defn try-it [a]
+    (= (expmod-mr a (dec n) n) 1))
+  (try-it (inc (rand-int (dec n)))))
+
+
+(defn fast-prime-mr? [n times]
+  (cond
+    (= times 0) true
+    (miller-rabin-test n) (fast-prime-mr? n (dec times))
+    :else false))
+
+(defn prime? [n]
+  (fast-prime-mr? n 20))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defn flatmap [proc s]
+  (foldl append (list) (map proc s)))
+
+(defn prime-sum? [pair]
+  (prime? (+ (first pair) (second pair))))
+
+(defn make-pair-sum [pair]
+  (list (first pair) (second pair) (+ (first pair) (second pair))))
+
+(defn prime-sum-pairs [n]
+  (map make-pair-sum
+       (filter prime-sum?
+               (flatmap (fn [i] (map (fn [j] (list i j))
+                                     (enumerate-interval 1 (dec i))))
+                        (enumerate-interval 1 n)))))
+
+;; remove member
+(defn rember [x s]
+  (filter (fn [e] (not (= x e))) s))
+
+(defn permutations [s]
+  (if (empty? s)
+    (list (list))
+    (flatmap (fn [x] (map (fn [p] (cons x p))
+                          (permutations (rember x s))))
+             s)))
+
+
+;; (permutations (list 1 2 3))
+;; => ((1 2 3) (1 3 2) (2 1 3) (2 3 1) (3 1 2) (3 2 1))
+
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 2.40
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
