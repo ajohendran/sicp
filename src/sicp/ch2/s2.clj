@@ -76,6 +76,8 @@
 
 
 
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Ex 2.17
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -87,6 +89,8 @@
 
 ;; (last-pair (list 23 72 149 34))
 ;; (34)
+
+
 
 
 
@@ -152,6 +156,8 @@
 
 
 
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Ex 2.19
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -191,6 +197,7 @@
 
 
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Ex 2.20
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -218,6 +225,8 @@
 
 
 
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Ex 2.21
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -231,6 +240,8 @@
 
 (defn square-list [items]
   (map square items))
+
+
 
 
 
@@ -270,6 +281,10 @@
 
 
 
+
+
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Ex 2.23
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -300,6 +315,10 @@
 
 (for-each (fn [x] (newline) (print x))
           (list 57 321 88))
+
+
+
+
 
 
 
@@ -353,6 +372,8 @@
 
 
 
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Ex 2.26
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -368,6 +389,8 @@
 
 ;; (list x y)
 ;; ((1 2 3) (4 5 6))
+
+
 
 
 
@@ -415,6 +438,8 @@
 
 ;; (deep-revrs x)
 ;; ((4 3) (2 1))
+
+
 
 
 
@@ -540,6 +565,9 @@
 ;; 2
 ;; (count-leaves (list x x))
 ;; 8
+
+
+
 
 
 
@@ -870,6 +898,8 @@
 
 
 
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Mapping Over Trees
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -889,6 +919,8 @@
                      (scale-tree subt factor)
                      (* factor subt)))]
     (map inner-fn tree)))
+
+
 
 
 
@@ -915,6 +947,9 @@
 
 
 
+
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 2.31
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -934,6 +969,8 @@
 
 ;; (tree-map (fn [n] (* 3 n)) x)
 ;; (3 (6 (9 12) 15) (18 21))
+
+
 
 
 
@@ -981,14 +1018,18 @@
 
 
 
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Sequence Operations
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn map-e [proc s]
+;; Using name 'mape' to differentiate from clojure's lazy map
+;; stands for map-eager
+(defn mape [proc s]
   (if (nil? s)
     (list)
-    (cons (proc (first s)) (map-e proc (next s)))))
+    (cons (proc (first s)) (mape proc (next s)))))
 
 (defn filter-e [pred s]
   (cond (nil? s) (list)
@@ -1014,7 +1055,7 @@
 (defn sum-odd-squares [tree]
   (accumulate +
               0
-              (map-e square
+              (mape square
                      (filter-e odd?
                                (enumerate-tree tree)))))
 
@@ -1036,7 +1077,7 @@
 
 (defn even-fibs [n]
   (filter-e even?
-            (map-e fib
+            (mape fib
                    (enumerate-interval 1 n))))
 
 
@@ -1049,7 +1090,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(defn map-e [proc sequence]
+(defn mape [proc sequence]
   (accumulate (fn [elmnt lst] (cons (proc elmnt) lst)) (list) sequence))
 
 
@@ -1069,7 +1110,6 @@
 ;;; Ex 2.34
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
 (defn horner-eval [x coeffs-seq]
   (accumulate
    (fn [coeff higher-terms] (+ coeff (* x higher-terms)))
@@ -1088,12 +1128,11 @@
 ;;; Ex 2.35
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
 (defn count-leaves [t]
   (accumulate
    +
    0
-   (map-e (fn [x] (if (seq? x) (count-leaves x) 1))
+   (mape (fn [x] (if (seq? x) (count-leaves x) 1))
           t)))
 
 ;; (def x (list 1 2 (list 3 4) (list 5 6) 7))
@@ -1112,10 +1151,10 @@
 
 
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 2.36
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 
 (defn accumulate-n [op init seqs]
   (if (empty? (first seqs))
@@ -1131,6 +1170,7 @@
 
 ;; (accumulate-n + 0 s)
 ;; (22 26 30)
+
 
 
 
@@ -1188,6 +1228,7 @@
 
 
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 2.38
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1221,9 +1262,19 @@
 ;; => (((() 1) 2) 3)
 
 ;; For foldl and foldr to produce same result,
-;; op should be associative,
-;; (a + b) + c = a + (b + c)
+;; op should be associative, that is, (a + b) + c = a + (b + c)
+;; or commutative, that is, a+b = b+a
 
+
+;; Example with commutative op --> +
+
+;; (foldl + 0 '(1 2 3 4 5))
+;; => 15
+;; (foldr + 0 '(1 2 3 4 5))
+;; => 15
+
+
+;; Example with associative op --> append
 
 ;; sicp.ch2.s2> (foldl append (list) (list (list 1) (list 2) (list 3) (list 4) (list 5)))
 ;; TRACE t10846: (sicp.ch2.s2/append () (1))
@@ -1253,6 +1304,11 @@
 ;; (1 2 3 4 5)
 
 
+
+
+
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 2.39
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1270,6 +1326,7 @@
 
 ;; (revrs (list 1 2 3 4 5))
 ;; => (5 4 3 2 1)
+
 
 
 
@@ -1318,11 +1375,23 @@
   (fast-prime-mr? n 20))
 
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;;; Some sequence operation definitions
+(defn mape [p s]
+  (foldr (fn [e res] (cons (p e) res)) (list) s))
 
 (defn flatmap [proc s]
-  (foldl append (list) (map proc s)))
+  (foldr append (list) (mape proc s)))
+
+;; remove member
+(defn rember [x s]
+  (filter (fn [e] (not (= x e))) s))
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn prime-sum? [pair]
   (prime? (+ (first pair) (second pair))))
@@ -1337,14 +1406,17 @@
                                      (enumerate-interval 1 (dec i))))
                         (enumerate-interval 1 n)))))
 
-;; remove member
-(defn rember [x s]
-  (filter (fn [e] (not (= x e))) s))
+;; (prime-sum-pairs 6)
+;; => ((2 1 3) (3 2 5) (4 1 5) (4 3 7) (5 2 7) (6 1 7) (6 5 11))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 (defn permutations [s]
   (if (empty? s)
     (list (list))
-    (flatmap (fn [x] (map (fn [p] (cons x p))
+    (flatmap (fn S-x [x] (mape (fn cons-back [p] (cons x p))
                           (permutations (rember x s))))
              s)))
 
@@ -1361,3 +1433,62 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 2.40
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn unique-pairs [n]
+  (flatmap (fn [i]
+          (mape (fn [j]
+                  (list i j))
+                (enumerate-interval 1 (dec i))))
+           (enumerate-interval 1 n)))
+
+
+;; (unique-pairs 5)
+;; => ((2 1) (3 1) (3 2) (4 1) (4 2) (4 3) (5 1) (5 2) (5 3) (5 4))
+
+
+(defn prime-sum-pairs [n]
+  (map make-pair-sum
+       (filter prime-sum?
+               (unique-pairs n))))
+
+
+(prime-sum-pairs 6)
+;; => ((2 1 3) (3 2 5) (4 1 5) (4 3 7) (5 2 7) (6 1 7) (6 5 11))
+
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 2.41
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn unique-triplets [n]
+  (flatmap (fn [i]
+          (flatmap (fn [j]
+                  (mape (fn [k]
+                          (list i j k))
+                        (enumerate-interval 1 (dec j))))
+                (enumerate-interval 1 (dec i))))
+           (enumerate-interval 1 n)))
+
+(defn triplets-to-sum [n s]
+  (filter (fn [v] (= s (+ (first v) (second v) (first (next (next v))))))
+          (unique-triplets n)))
+
+
+;; (triplets-to-sum 5 10)
+;; => ((5 3 2) (5 4 1))
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 2.41
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
