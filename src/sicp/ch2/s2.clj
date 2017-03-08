@@ -313,8 +313,8 @@
       (for-each proc (next items)))))
 
 
-(for-each (fn [x] (newline) (print x))
-          (list 57 321 88))
+;; (for-each (fn [x] (newline) (print x))
+;;           (list 57 321 88))
 
 
 
@@ -1490,5 +1490,82 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 2.41
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn pair= [p1 p2]
+  (and (= (first p1) (first p2))
+       (= (second p1) (second p2))))
+
+;; or can use a more general version to check
+;; contents of entire list
+(defn list= [l1 l2]
+  (or (and (empty? l1) (empty? l2))
+      (and (not (empty? l1))
+           (not (empty? l2))
+           (= (first l1) (first l2)) 
+           (recur (next l1) (next l2)))))
+
+
+;; sicp.ch2.s2> (list= [6 1 4 7] [6 2 4 7])
+;; false
+;; sicp.ch2.s2> (list= (list 1 2 3 4 5 6) (enumerate-interval 1 6))
+;; true
+;; sicp.ch2.s2> (list= (list 1 2 3 4 5 6 7) (enumerate-interval 1 6))
+;; false
+;; sicp.ch2.s2> (list= (list 1 2 4 5 6) (enumerate-interval 1 6))
+;; false
+;; sicp.ch2.s2> (list= (list 1 2 4 5 6) (list))
+;; false
+;; sicp.ch2.s2> (list= (list) (list))
+;; true
+
+
+
+;; (defn member? [f e l]
+;;   (cond (empty? l) false
+;;         (f e (first l)) true
+;;         :else (member? e (next l))))
+
+(defn member? [f e l]
+  (and (not (empty? l))
+       (or (f e (first l))
+           (member? f e (next l)))))
+
+
+;; sicp.ch2.s2> (member? = 5 (list 1 2 3 4)
+;; false
+;; sicp.ch2.s2> (member? = 5 (list 1 2 3 5 4)
+;; true
+
+;; sicp.ch2.s2> (member-pair? [1 2] [[4 5] [5 6] [7 8]])
+;; false
+;; sicp.ch2.s2> (member-pair? [1 2] [[4 5] [5 6] [7 8] [1 2]])
+;; true
+
+
+(def empty-board (list (list)))
+
+
+(defn adjoin-position [row col rest-ofqueens]
+  )
+
+(defn safe? [col pos]
+  )
+
+(defn queens [board-size]
+  (defn queen-cols [k] 
+    (if (= k 0)
+        (list empty-board)
+        (filter
+         (fn [positions] (safe? k positions))
+         (flatmap
+          (fn [rest-of-queens]
+            (mape (fn [new-row]
+                   (adjoin-position new-row k rest-of-queens))
+                 (enumerate-interval 1 board-size)))
+          (queen-cols (- k 1))))))
+  (queen-cols board-size))
+
+
+
 
 
