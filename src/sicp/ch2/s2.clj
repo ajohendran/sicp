@@ -1031,10 +1031,10 @@
     (list)
     (cons (proc (first s)) (mape proc (next s)))))
 
-(defn filter-e [pred s]
+(defn filtere [pred s]
   (cond (nil? s) (list)
-        (pred (first s)) (cons (first s) (filter-e pred (next s)))
-        :else (filter-e pred (next s))))
+        (pred (first s)) (cons (first s) (filtere pred (next s)))
+        :else (filtere pred (next s))))
 
 (defn accumulate [op initial s]
   (if (empty? s)
@@ -1056,7 +1056,7 @@
   (accumulate +
               0
               (mape square
-                     (filter-e odd?
+                     (filtere odd?
                                (enumerate-tree tree)))))
 
 (defn fib
@@ -1076,7 +1076,7 @@
 
 
 (defn even-fibs [n]
-  (filter-e even?
+  (filtere even?
             (mape fib
                    (enumerate-interval 1 n))))
 
@@ -1491,6 +1491,8 @@
 ;;; Ex 2.41
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Note: this exercise requires a lot of work with pen and paper
+
 (defn pair= [p1 p2]
   (and (= (first p1) (first p2))
        (= (second p1) (second p2))))
@@ -1505,57 +1507,36 @@
            (recur (next l1) (next l2)))))
 
 
-;; sicp.ch2.s2> (list= [6 1 4 7] [6 2 4 7])
-;; false
-;; sicp.ch2.s2> (list= (list 1 2 3 4 5 6) (enumerate-interval 1 6))
-;; true
-;; sicp.ch2.s2> (list= (list 1 2 3 4 5 6 7) (enumerate-interval 1 6))
-;; false
-;; sicp.ch2.s2> (list= (list 1 2 4 5 6) (enumerate-interval 1 6))
-;; false
-;; sicp.ch2.s2> (list= (list 1 2 4 5 6) (list))
-;; false
-;; sicp.ch2.s2> (list= (list) (list))
-;; true
-
-
-
-;; (defn member? [f e l]
-;;   (cond (empty? l) false
-;;         (f e (first l)) true
-;;         :else (member? e (next l))))
-
 (defn member? [f e l]
   (and (not (empty? l))
        (or (f e (first l))
-           (member? f e (next l)))))
+           (recur f e (next l)))))
 
+(defn has-duplicates? [l]
+  (and (not (empty? l))
+       (or (member? = (first l) (next l))
+           (recur (next l)))))
 
-;; sicp.ch2.s2> (member? = 5 (list 1 2 3 4)
-;; false
-;; sicp.ch2.s2> (member? = 5 (list 1 2 3 5 4)
-;; true
-
-;; sicp.ch2.s2> (member-pair? [1 2] [[4 5] [5 6] [7 8]])
-;; false
-;; sicp.ch2.s2> (member-pair? [1 2] [[4 5] [5 6] [7 8] [1 2]])
-;; true
-
-
-(def empty-board (list (list)))
-
-
-(defn adjoin-position [row col rest-ofqueens]
+(defn on-diagonal? [positions]
   )
+
+(def empty-board (list))
+
+
+(defn adjoin-position [row col rest-of-queens]
+  (cons (list row col) rest-of-queens))
 
 (defn safe? [col pos]
-  )
+  (let [a (accumulate-n cons (list) pos)]
+    (not (or (has-duplicates? (first a))
+             (has-duplicates? (second a))
+             (on-diagona l? pos)))))
 
 (defn queens [board-size]
   (defn queen-cols [k] 
     (if (= k 0)
         (list empty-board)
-        (filter
+        (filtere
          (fn [positions] (safe? k positions))
          (flatmap
           (fn [rest-of-queens]
