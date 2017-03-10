@@ -1492,52 +1492,64 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Note: this exercise requires a lot of work with pen and paper
+  
+(defn make-position [row col]
+  (list row col))
 
-(defn pair= [p1 p2]
-  (and (= (first p1) (first p2))
-       (= (second p1) (second p2))))
+(defn row-position [pos]
+  (first pos))
 
-;; or can use a more general version to check
-;; contents of entire list
-(defn list= [l1 l2]
-  (or (and (empty? l1) (empty? l2))
-      (and (not (empty? l1))
-           (not (empty? l2))
-           (= (first l1) (first l2)) 
-           (recur (next l1) (next l2)))))
-
-
-(defn member? [f e l]
-  (and (not (empty? l))
-       (or (f e (first l))
-           (recur f e (next l)))))
-
-(defn has-duplicates? [l]
-  (and (not (empty? l))
-       (or (member? = (first l) (next l))
-           (recur (next l)))))
-
-(defn on-diagonal? [positions]
-  )
-
+(defn col-position [pos]
+  (second pos))
+ 
+ 
 (def empty-board (list))
 
 
 (defn adjoin-position [row col rest-of-queens]
-  (cons (list row col) rest-of-queens))
+  (cons (make-position row col) rest-of-queens))
 
-(defn safe? [col pos]
-  (let [a (accumulate-n cons (list) pos)]
-    (not (or (has-duplicates? (first a))
-             (has-duplicates? (second a))
-             (on-diagona l? pos)))))
+
+(defn same-row? [p1 p2]
+  (= (row-position p1) (row-position p2)))
+  
+(defn same-col? [p1 p2]
+  (= (col-position p1) (col-position p2)))
+
+(defn diagonal-down? [p1 p2]
+  (= (- (row-position p1) (row-position p2)) 
+     (- (col-position p1) (col-position p2))))
+     
+(defn diagonal-up? [p1 p2]
+  (= (- (row-position p1) (row-position p2)) 
+     (- (col-position p2) (col-position p1))))
+     
+(defn pos-in-check? [p1 p2]
+  (or (same-row? p1 p2) (same-col? p1 p2) (diagonal-down? p1 p2) (diagonal-up? p1 p2)))
+
+(defn queen-check-fn [p1]
+  (fn [p2]
+    (or (same-row? p1 p2) 
+        (same-col? p1 p2)
+        (diagonal-down? p1 p2)
+        (diagonal-up? p1 p2))))
+
+(defn any? [pred coll]
+  (and (not (empty? coll))
+       (or (pred (first coll))
+           (recur (pred (next coll)))))
+     
+(defn safe? [pos]
+  (or (< (length pos) 2)
+      (not (any? (queen-check-fn (first pos)) (next pos)))))
+
 
 (defn queens [board-size]
   (defn queen-cols [k] 
     (if (= k 0)
         (list empty-board)
-        (filtere
-         (fn [positions] (safe? k positions))
+        (filter
+         (fn [positions] (safe? positions))
          (flatmap
           (fn [rest-of-queens]
             (mape (fn [new-row]
@@ -1545,8 +1557,5 @@
                  (enumerate-interval 1 board-size)))
           (queen-cols (- k 1))))))
   (queen-cols board-size))
-
-
-
 
 
