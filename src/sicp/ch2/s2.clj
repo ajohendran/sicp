@@ -1492,6 +1492,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Note: this exercise requires a lot of work with pen and paper
+;; Note 2: not sure why safe? procedure takes 
   
 (defn make-position [row col]
   (list row col))
@@ -1524,8 +1525,6 @@
   (= (- (row-position p1) (row-position p2)) 
      (- (col-position p2) (col-position p1))))
      
-(defn pos-in-check? [p1 p2]
-  (or (same-row? p1 p2) (same-col? p1 p2) (diagonal-down? p1 p2) (diagonal-up? p1 p2)))
 
 (defn queen-check-fn [p1]
   (fn [p2]
@@ -1537,7 +1536,7 @@
 (defn any? [pred coll]
   (and (not (empty? coll))
        (or (pred (first coll))
-           (recur (pred (next coll)))))
+           (recur pred (next coll)))))
      
 (defn safe? [pos]
   (or (< (length pos) 2)
