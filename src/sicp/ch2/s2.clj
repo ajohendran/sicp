@@ -1488,11 +1488,11 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Ex 2.41
+;;; Ex 2.42
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Note: this exercise requires a lot of work with pen and paper
-;; Note 2: not sure why safe? procedure takes 
+
   
 (defn make-position [row col]
   (list row col))
@@ -1514,8 +1514,6 @@
 (defn same-row? [p1 p2]
   (= (row-position p1) (row-position p2)))
   
-(defn same-col? [p1 p2]
-  (= (col-position p1) (col-position p2)))
 
 (defn diagonal-down? [p1 p2]
   (= (- (row-position p1) (row-position p2)) 
@@ -1529,7 +1527,6 @@
 (defn queen-check-fn [p1]
   (fn [p2]
     (or (same-row? p1 p2) 
-        (same-col? p1 p2)
         (diagonal-down? p1 p2)
         (diagonal-up? p1 p2))))
 
@@ -1557,4 +1554,186 @@
           (queen-cols (- k 1))))))
   (queen-cols board-size))
 
+
+
+;; sicp.ch2.s2> (pprint (queens 5))
+;; (((3 5) (1 4) (4 3) (2 2) (5 1))
+;;  ((2 5) (4 4) (1 3) (3 2) (5 1))
+;;  ((2 5) (5 4) (3 3) (1 2) (4 1))
+;;  ((1 5) (3 4) (5 3) (2 2) (4 1))
+;;  ((5 5) (2 4) (4 3) (1 2) (3 1))
+;;  ((1 5) (4 4) (2 3) (5 2) (3 1))
+;;  ((5 5) (3 4) (1 3) (4 2) (2 1))
+;;  ((4 5) (1 4) (3 3) (5 2) (2 1))
+;;  ((4 5) (2 4) (5 3) (3 2) (1 1))
+;;  ((3 5) (5 4) (2 3) (4 2) (1 1)))
+;; null
+
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 2.42 - Alternate Representation
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+;; Looking at solutions from previous representation, it is clear that
+;; column values are always increasing right to left from 1 to n
+
+;; Solution to (queens 4)
+;; ((3 4) (1 3) (4 2) (2 1))
+;; ((2 4) (4 3) (1 2) (3 1))
+
+;; Above solutions might as well be represented as
+;; (3 1 4 2)
+;; (2 4 1 3)
+;; with undestanding that these the are the row positions
+;; and column values start from right end and increase leftwards by steps of one
+
+;; Also for 'safe?' procedue, same column check is unnecessary because the procedure
+;; always only adds rows to new columns
+
+;; because Math/abs is horrendously slow
+(defn abs [n] (if (neg? n) (-' n) n))
+
+(def empty-board-2 (list))
+
+(defn adjoin-position-2 [row col rest-of-queens]
+  (cons row rest-of-queens))
+
+(defn in-check-2? [pos diag-dist coll]
+  (and (not (empty? coll))
+       (or (= pos (first coll))
+           (= diag-dist (abs (- pos (first coll))))
+           (recur pos (inc diag-dist) (next coll)))))
+     
+(defn safe-2? [pos]
+  (or (< (length pos) 2)
+      (not (in-check-2? (first pos) 1 (next pos)))))
+
+
+(defn queens-2 [board-size]
+  (defn queen-cols [k] 
+    (if (= k 0)
+        (list empty-board-2)
+        (filter
+         (fn [positions] (safe-2? positions))
+         (flatmap
+          (fn [rest-of-queens]
+            (mape (fn [new-row]
+                   (adjoin-position-2 new-row k rest-of-queens))
+                 (enumerate-interval 1 board-size)))
+          (queen-cols (- k 1))))))
+  (queen-cols board-size))
+
+
+
+;; sicp.ch2.s2> (pprint (queens-2 5))
+;; ((3 1 4 2 5)
+;;  (2 4 1 3 5)
+;;  (2 5 3 1 4)
+;;  (1 3 5 2 4)
+;;  (5 2 4 1 3)
+;;  (1 4 2 5 3)
+;;  (5 3 1 4 2)
+;;  (4 1 3 5 2)
+;;  (4 2 5 3 1)
+;;  (3 5 2 4 1))
+;; null
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 2.43
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; using foldl and append to avoid stack overflow
+(defn filtere [pred sequence]
+  (foldl (fn [res e]
+           (if (pred e)
+             (append res (list e))
+             res))
+         (list)
+         sequence))
+
+(defn length [sequence]
+  (foldl (fn [res elem] (inc res)) 0 sequence))
+
+(defn adjoin-position-2 [row rest-of-queens]
+  (cons row rest-of-queens))
+
+(defn queens-2 [board-size]
+  (defn queen-cols [k] 
+    (if (= k 0)
+        (list empty-board-2)
+        (filtere
+         (fn [positions] (safe-2? positions))
+         (flatmap
+          (fn [rest-of-queens]
+            (mape (fn [new-row]
+                   (adjoin-position-2 new-row rest-of-queens))
+                 (enumerate-interval 1 board-size)))
+          (queen-cols (- k 1))))))
+  (queen-cols board-size))
+
+
+
+
+(defn queens-3 [board-size]
+  (defn queen-cols [k] 
+    (if (= k 0)
+        (list empty-board-2)
+        (filtere
+         (fn [positions] (safe-2? positions))
+         (mapcat
+          (fn [new-row]
+            (mape (fn [rest-of-queens]
+                    (adjoin-position-2 new-row rest-of-queens))
+                  (queen-cols (- k 1))))
+          (enumerate-interval 1 board-size)))))
+  (queen-cols board-size))
+
+;; k -> (queens-2) | time (queens-3) | ratio 
+;; 2 -> 0.07       | 0.08            | 1.14
+;; 3 -> 0.083      | 0.154           | 1.86
+;; 4 -> 0.13       | 0.92            | 7.07
+;; 5 -> 0.34       | 11.3            | 33.24
+;; 6 -> 1.39       | 197.7           | 142.23
+;; 7 -> 7.26       | 4254            | 586
+;; 8 -> 63         | 129448.6        | 2054.7
+
+
+;; With original procedure:
+;; There ware  method calls
+;; If safe? always returned true,
+;; k^k + k^(k-1) + k^(k-2) + ..... + k adjoin operations
+;; Note: Each method call has filter and flatmap (with append) operations as well
+
+
+;; With second procedure
+;; If safe? always returned true, there are k^(k+1) adjoin operations
+;; However, the number of method calls is much larger
+;; For (queens 8)
+;; (queen-cols 7) is called 8^1 times
+;; (queen-cols 6) called 8^2 times
+;; (queen-cols 5) called 8^3 times
+;; (queen-cols 4) called 8^4 times
+;; (queen-cols 3) called 8^5 times
+;; (queen-cols 2) called 8^6 times
+;; (queen-cols 1) called 8^7 times
+;; (queen-cols 0) called 8^8 times
+;; When queen-cols called with lower values, the method executes faster
+;; But queen-cols is called with higher values less number of times
+;; So , let's pick something from middle
+
+;; Therefore, the Louis' procedure roughly 8^4 times longer.
+;; In general Louis procedure will be slower by around a factor of k^(k/2)
+;; Definitely a O(n^n) proceudre
 
