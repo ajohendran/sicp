@@ -1579,6 +1579,50 @@
 ;;; Ex 2.42 - Alternate Representation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Dealing with stackoverlfow when using filtere, mape and flatmap, starting with
+;; (queens-2 8)
+;; Redefining some sequence functions to use foldl and revrs where
+;; possible/necessary - especially flatmap and filtere
+
+
+(defn append [l1 l2]
+  (foldr (fn [e res] (cons e  res)) l2 l1))
+
+(defn mape [p s]
+  (foldr (fn [e res] (cons (p e) res)) (list) s))
+
+;; causes stack overflow
+(defn filtere [pred s]
+  (foldr (fn [e res]
+              (if (pred e) (cons e res) res))
+            (list)
+            s))
+
+;; improved flatmap but still causes stack overflow
+(defn flatmap [proc s]
+  (foldr (fn [e res] (append (proc e) res)) (list) s))
+
+
+(defn revrs [s]
+  (foldl (fn [l e] (cons e l)) (list) s))
+
+(defn length [sequence]
+  (foldl (fn [res elem] (inc res)) 0 sequence))
+
+
+;; using foldl and revrs to avoid stack overflow
+(defn flatmap [proc s]
+  (revrs (foldl (fn [res e] (append (proc e) res)) (list) s)))
+
+;; using foldl and revrs to avoid stack overflow
+(defn filtere [pred sequence]
+  (revrs (foldl (fn [res e]
+                  (if (pred e)
+                    (cons e res)
+                    res))
+                (list)
+                sequence)))
+
 
 
 ;; Looking at solutions from previous representation, it is clear that
@@ -1620,7 +1664,7 @@
   (defn queen-cols [k] 
     (if (= k 0)
         (list empty-board-2)
-        (filter
+        (filtere
          (fn [positions] (safe-2? positions))
          (flatmap
           (fn [rest-of-queens]
@@ -1654,20 +1698,6 @@
 ;;; Ex 2.43
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; using foldl and append to avoid stack overflow
-(defn filtere [pred sequence]
-  (foldl (fn [res e]
-           (if (pred e)
-             (append res (list e))
-             res))
-         (list)
-         sequence))
-
-(defn length [sequence]
-  (foldl (fn [res elem] (inc res)) 0 sequence))
-
-(defn adjoin-position-2 [row rest-of-queens]
-  (cons row rest-of-queens))
 
 (defn queens-2 [board-size]
   (defn queen-cols [k] 
@@ -1678,12 +1708,10 @@
          (flatmap
           (fn [rest-of-queens]
             (mape (fn [new-row]
-                   (adjoin-position-2 new-row rest-of-queens))
+                   (adjoin-position-2 new-row k rest-of-queens))
                  (enumerate-interval 1 board-size)))
           (queen-cols (- k 1))))))
   (queen-cols board-size))
-
-
 
 
 (defn queens-3 [board-size]
@@ -1695,7 +1723,7 @@
          (mapcat
           (fn [new-row]
             (mape (fn [rest-of-queens]
-                    (adjoin-position-2 new-row rest-of-queens))
+                    (adjoin-position-2 new-row k rest-of-queens))
                   (queen-cols (- k 1))))
           (enumerate-interval 1 board-size)))))
   (queen-cols board-size))
@@ -1721,7 +1749,7 @@
 ;; If safe? always returned true, there are k^(k+1) adjoin operations
 ;; However, the number of method calls is much larger
 ;; For (queens 8)
-;; (queen-cols 7) is called 8^1 times
+;; (queen-cols 7) called 8^1 times
 ;; (queen-cols 6) called 8^2 times
 ;; (queen-cols 5) called 8^3 times
 ;; (queen-cols 4) called 8^4 times
@@ -1731,9 +1759,9 @@
 ;; (queen-cols 0) called 8^8 times
 ;; When queen-cols called with lower values, the method executes faster
 ;; But queen-cols is called with higher values less number of times
-;; So , let's pick something from middle
+;; Let's pick something from middle that corresponds to empirical observation
 
-;; Therefore, the Louis' procedure roughly 8^4 times longer.
+;; Best estimate, the Louis' procedure roughly 8^4 times longer.
 ;; In general Louis procedure will be slower by around a factor of k^(k/2)
 ;; Definitely a O(n^n) proceudre
 
