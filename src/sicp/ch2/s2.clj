@@ -1696,7 +1696,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 2.43
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 (defn queens-2 [board-size]
@@ -1761,7 +1761,17 @@
 ;; But queen-cols is called with higher values less number of times
 ;; Let's pick something from middle that corresponds to empirical observation
 
-;; Best estimate, the Louis' procedure roughly 8^4 times longer.
+;; Best estimate, the Louis' procedure takes roughly 8^4 times longer.
 ;; In general Louis procedure will be slower by around a factor of k^(k/2)
-;; Definitely a O(n^n) proceudre
+;; Definitely an O(n^n) proceudre
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Picture Language
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; See the file henderson.clj in smae folder as ghis file
 
