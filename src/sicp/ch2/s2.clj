@@ -1773,5 +1773,6 @@
 ;;; Picture Language
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; See the file henderson.clj in smae folder as ghis file
+;; See the file pictlang.clj in same folder as this file for exercises
+;; 2.44 to 2.52
 
