@@ -4,7 +4,6 @@
 ;;;;  List Operations
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
 ;; (defn list-ref [items n]
 ;;   (if (= n 0)
 ;;     (first items)
@@ -35,7 +34,6 @@
 ;; (list-ref squares 3)
 ;; 16
 
-
 (defn length [items]
   (if (empty? items)
     0
@@ -65,15 +63,11 @@
 ;; (append squares odds)
 ;; (1 4 9 16 25 1 3 5 7)
 
-
-
 ;; following iterative definition is wrong. It reverses l1
 ;; (defn append [l1 l2]
 ;;   (if (empty? l1)
 ;;     l2
 ;;     (recur (next l1) (cons (first l1) l2))))
-
-
 
 
 
@@ -89,7 +83,6 @@
 
 ;; (last-pair (list 23 72 149 34))
 ;; (34)
-
 
 
 
@@ -156,12 +149,9 @@
 
 
 
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Ex 2.19
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 
 (def us-coins (list 50 25 10 5 1))
 (def uk-coins (list 100 50 20 10 5 2 1 0.5))
@@ -178,7 +168,6 @@
 (defn single-denomination? [coins]
   (empty? (rest coins)))
 
-
 (defn cc [amount coin-values]
   (cond  (or (< amount 0) (no-more? coin-values)) 0
          (= amount 0) 1
@@ -189,10 +178,8 @@
 ;; sicp.ch2.s2> (cc 100 uk-coins)
 ;; 104561
 
-
 ;; Order doesn't affect the answer. It takes longer with ascending order but
 ;; it still goes through all the coins
-
 
 
 
@@ -225,8 +212,6 @@
 
 
 
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Ex 2.21
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -240,7 +225,6 @@
 
 (defn square-list [items]
   (map square items))
-
 
 
 
@@ -283,13 +267,9 @@
 
 
 
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Ex 2.23
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
 
 (defn for-each [proc items]
   (defn continue [items]
@@ -315,9 +295,6 @@
 
 ;; (for-each (fn [x] (newline) (print x))
 ;;           (list 57 321 88))
-
-
-
 
 
 
@@ -354,8 +331,6 @@
 ;; (first (first lst))
 ;; 7
 
-
-
 ;; (def lst (list 1 (list 2 (list 3 (list 4 (list 5 (list 6 7)))))))
 
 ;; lst
@@ -367,9 +342,6 @@
 ;;                                                  (first
 ;;                                                   (next lst))))))))))))
 ;; 7
-
-
-
 
 
 
@@ -389,9 +361,6 @@
 
 ;; (list x y)
 ;; ((1 2 3) (4 5 6))
-
-
-
 
 
 
@@ -416,7 +385,6 @@
 ;; (revrs x)
 ;; ((3 4) (1 2))
 
-
 (defn deep-revrs
   ([t]
    (deep-revrs t (list)))
@@ -435,12 +403,8 @@
          (seq? t) (deep-revrs (next t) (cons (deep-revrs (first t) (list)) ans))
          :else t)))
 
-
 ;; (deep-revrs x)
 ;; ((4 3) (2 1))
-
-
-
 
 
 
@@ -448,7 +412,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Ex 2.28
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 
 ;; (def x (list 5 (list 1 2) (list 3 4) 6))
 
@@ -501,6 +464,8 @@
 ;; (5 1 2 3 4 6 5 1 2 3 4 6)
 
 
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Count Leaves
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -509,7 +474,6 @@
 
 ;; x
 ;; ((1 2) 3 4)
-
 
 ;; There are 4 different ways to work down a tree,
 ;; 2 completely recursive and 2 partly iterative
@@ -522,7 +486,6 @@
                                (count-leaves (next tree)))
         :else (inc (count-leaves (next tree)))))
 
-
 ;; Method provided in the book
 ;; note: first test in cond uses nil? instead of seq?
 ;; because we are recursively taking first and will eventually
@@ -534,7 +497,6 @@
         :else (+ (count-leaves (first tree))
                  (count-leaves (next tree)))))
 
-
 ;; For partly iterative approach
 ;; comparable to deep-revrs , see Ex 2.27
 (defn count-leaves
@@ -545,8 +507,6 @@
          (seq? tree) (count-leaves (first tree) (count-leaves (next tree) ans))
          :else (inc ans))))
 
-
-
 (defn count-leaves
   ([tree]
    (count-leaves tree 0))
@@ -554,7 +514,6 @@
    (cond (empty? tree) ans
          (seq? (first tree)) (count-leaves (first tree) (count-leaves (next tree) ans))
          :else (count-leaves (next tree) (inc ans)))))
-
 
 ;; (length x)
 ;; 3
@@ -569,9 +528,6 @@
 
 
 
-
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Ex 2.29
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -581,7 +537,6 @@
 
 (defn make-branch [length structure]
   (list length structure))
-
 
 ;;;;;;; a ;;;;;;;
 
@@ -595,7 +550,6 @@
 ;;;;;;; additional data abstraction procedures ::::::::
 (defn mobile-structure? [structure]
   (seq? structure))
-
 
 ;;;;;;;; data for testing;;;;;;;
 
@@ -659,7 +613,6 @@
     (+
      (struct-weight (branch-structure (left-branch mobile)))
      (struct-weight (branch-structure (right-branch mobile))))))
-
 
 
 ;; a coceptually better way to define this is with mutual recursion
@@ -806,7 +759,6 @@
 ;; true
 
 
-
 ;; It would be better if there was a way to just recurse down just once
 ;; and build up needed information
 
@@ -832,14 +784,11 @@
             rb-balance)))
     (make-tree-info s true)))
 
-
 (defn total-weight [m]
   (weight-info (get-subtree-info m)))
 
 (defn balanced? [m]
   (balance-info (get-subtree-info m)))
-
-
 
 
 ;; sicp.ch2.s2> (balanced? m5)
@@ -864,7 +813,6 @@
 ;; TRACE t11616: | => (20 true)
 ;; TRACE t11615: => true
 ;; true
-
 
 
 ;; sicp.ch2.s2> (total-weight m1)
@@ -897,9 +845,6 @@
 
 
 
-
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Mapping Over Trees
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -923,9 +868,6 @@
 
 
 
-
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 2.30
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -943,9 +885,6 @@
                      (square-tree subtree)
                      (square subtree)))]
     (map inner-fn tree)))
-
-
-
 
 
 
@@ -973,17 +912,13 @@
 
 
 
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 2.32
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
 ;; 3 elements
 ;; (1 2 3)
 ;; (() (3) (2) (2 3) (1) (1 3) (1 2) (1 2 3))
-
 
 ;; There seems to be a jump in sequence (1 2 3) -> (2 3) -> (3) -> ()
 ;; This signifies there is a recursive call to subsets with (rest s)
@@ -1014,8 +949,6 @@
     (list (list))
     (let [remaining (subsets (next s))]
       (append remaining (map (fn [l] (cons (first s) l)) remaining)))))
-
-
 
 
 
@@ -1083,12 +1016,9 @@
 
 
 
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 2.33
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 
 (defn mape [proc sequence]
   (accumulate (fn [elmnt lst] (cons (proc elmnt) lst)) (list) sequence))
@@ -1099,9 +1029,6 @@
 
 (defn length [sequence]
   (accumulate (fn [elmnt res] (inc res)) 0 sequence))
-
-
-
 
 
 
@@ -1151,7 +1078,6 @@
 
 
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 2.36
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1174,8 +1100,6 @@
 
 
 
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 2.37
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1185,14 +1109,11 @@
 ;; mat
 ;; => ((1 2 3 4) (4 5 6 6) (6 7 8 9))
 
-
 (defn dot-product [v w]
   (accumulate + 0 (map * v w)))
 
 ;; (dot-product (list 1 2 3 4) (list 4 5 6 6))
 ;; => 56
-
-
 
 (defn matrix-*-vector [m v]
   (map (fn [w] (dot-product w v)) m))
@@ -1200,13 +1121,11 @@
 ;; (matrix-*-vector mat (list 1 2 3 4))
 ;; => (30 56 80)
 
-
 (defn transpose [mat]
   (accumulate-n cons (list) mat))
 
 ;; (transpose mat)
 ;; => ((1 4 6) (2 5 7) (3 6 8) (4 6 9))
-
 
 (defn matrix-*-matrix [m n]
   (let [cols (transpose n)]
@@ -1223,8 +1142,6 @@
 
 ;; (matrix-*-matrix mat-A mat-B)
 ;; ((0 -10) (-3 -1))
-
-
 
 
 
@@ -1306,9 +1223,6 @@
 
 
 
-
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 2.39
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1319,8 +1233,6 @@
 (revrs (list 1 2 3 4 5))
 ;; => (5 4 3 2 1)
 
-
-
 (defn revrs [s]
   (foldl (fn [l e] (cons e l)) (list) s))
 
@@ -1330,12 +1242,9 @@
 
 
 
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Nested Mappings
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 
 ;;;;;  Prime ;;;;;;;;;
 (defn square [n]
@@ -1375,7 +1284,6 @@
   (fast-prime-mr? n 20))
 
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; Some sequence operation definitions
@@ -1388,7 +1296,6 @@
 ;; remove member
 (defn rember [x s]
   (filter (fn [e] (not (= x e))) s))
-
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1409,9 +1316,7 @@
 ;; (prime-sum-pairs 6)
 ;; => ((2 1 3) (3 2 5) (4 1 5) (4 3 7) (5 2 7) (6 1 7) (6 5 11))
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;
-
 
 (defn permutations [s]
   (if (empty? s)
@@ -1423,9 +1328,6 @@
 
 ;; (permutations (list 1 2 3))
 ;; => ((1 2 3) (1 3 2) (2 1 3) (2 3 1) (3 1 2) (3 2 1))
-
-
-
 
 
 
@@ -1445,18 +1347,13 @@
 ;; (unique-pairs 5)
 ;; => ((2 1) (3 1) (3 2) (4 1) (4 2) (4 3) (5 1) (5 2) (5 3) (5 4))
 
-
 (defn prime-sum-pairs [n]
   (map make-pair-sum
        (filter prime-sum?
                (unique-pairs n))))
 
-
 (prime-sum-pairs 6)
 ;; => ((2 1 3) (3 2 5) (4 1 5) (4 3 7) (5 2 7) (6 1 7) (6 5 11))
-
-
-
 
 
 
@@ -1485,14 +1382,11 @@
 
 
 
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 2.42
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Note: this exercise requires a lot of work with pen and paper
-
   
 (defn make-position [row col]
   (list row col))
@@ -1503,18 +1397,14 @@
 (defn col-position [pos]
   (second pos))
  
- 
 (def empty-board (list))
-
 
 (defn adjoin-position [row col rest-of-queens]
   (cons (make-position row col) rest-of-queens))
 
-
 (defn same-row? [p1 p2]
   (= (row-position p1) (row-position p2)))
   
-
 (defn diagonal-down? [p1 p2]
   (= (- (row-position p1) (row-position p2)) 
      (- (col-position p1) (col-position p2))))
@@ -1523,7 +1413,6 @@
   (= (- (row-position p1) (row-position p2)) 
      (- (col-position p2) (col-position p1))))
      
-
 (defn queen-check-fn [p1]
   (fn [p2]
     (or (same-row? p1 p2) 
@@ -1539,7 +1428,6 @@
   (or (< (length pos) 2)
       (not (any? (queen-check-fn (first pos)) (next pos)))))
 
-
 (defn queens [board-size]
   (defn queen-cols [k] 
     (if (= k 0)
@@ -1553,8 +1441,6 @@
                  (enumerate-interval 1 board-size)))
           (queen-cols (- k 1))))))
   (queen-cols board-size))
-
-
 
 ;; sicp.ch2.s2> (pprint (queens 5))
 ;; (((3 5) (1 4) (4 3) (2 2) (5 1))
@@ -1572,9 +1458,6 @@
 
 
 
-
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 2.42 - Alternate Representation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1583,7 +1466,6 @@
 ;; (queens-2 8)
 ;; Redefining some sequence functions to use foldl and revrs where
 ;; possible/necessary - especially flatmap and filtere
-
 
 (defn append [l1 l2]
   (foldr (fn [e res] (cons e  res)) l2 l1))
@@ -1623,8 +1505,6 @@
                 (list)
                 sequence)))
 
-
-
 ;; Looking at solutions from previous representation, it is clear that
 ;; column values are always increasing right to left from 1 to n
 
@@ -1659,7 +1539,6 @@
   (or (< (length pos) 2)
       (not (in-check-2? (first pos) 1 (next pos)))))
 
-
 (defn queens-2 [board-size]
   (defn queen-cols [k] 
     (if (= k 0)
@@ -1673,8 +1552,6 @@
                  (enumerate-interval 1 board-size)))
           (queen-cols (- k 1))))))
   (queen-cols board-size))
-
-
 
 ;; sicp.ch2.s2> (pprint (queens-2 5))
 ;; ((3 1 4 2 5)
@@ -1692,12 +1569,9 @@
 
 
 
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 2.43
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 
 (defn queens-2 [board-size]
   (defn queen-cols [k] 
@@ -1712,7 +1586,6 @@
                  (enumerate-interval 1 board-size)))
           (queen-cols (- k 1))))))
   (queen-cols board-size))
-
 
 (defn queens-3 [board-size]
   (defn queen-cols [k] 
@@ -1764,7 +1637,6 @@
 ;; Best estimate, the Louis' procedure takes roughly 8^4 times longer.
 ;; In general Louis procedure will be slower by around a factor of k^(k/2)
 ;; Definitely an O(n^n) proceudre
-
 
 
 
