@@ -17,6 +17,11 @@
       (recur (proc ans (first s))
              (next s)))))
 
+(defn foldr [op init s]
+  (if (empty? s)
+    init
+    (op (first s) (foldr op init (next s)))))
+
 (defn for-each [proc sequence]
   (foldl (fn [res elem] (proc elem)) nil sequence))
 
@@ -28,6 +33,9 @@
   (cond (= 0 n) identity
         (= 1 n) f
         :else (compose f (repeated f (dec n)))))
+
+(defn append [l1 l2]
+  (foldr (fn [e res] (cons e  res)) l2 l1))
 
 
 
@@ -142,10 +150,11 @@
                              (frame-mapper (end-segment segment))))
                 segment-list))))
 
-
 (defn picture->painter [pic]
   (fn [frame]
     ))
+
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -160,8 +169,8 @@
                         (make-vect 0.75 0.75)))
 
 (def frame-sq-10 (make-frame (make-vect 0 0)
-                             (make-vect 10 0)
-                             (make-vect 0 10)))
+                             (make-vect 10.0 0.0)
+                             (make-vect 0.0 10.0)))
 
 (def frame-sq-20 (make-frame (make-vect 0 0)
                              (make-vect 20 0)
@@ -176,3 +185,73 @@
 ((segments->painter (list seg1 seg2)) frame-rect-10-20)
 
 
+(def frame-ccw-90 (make-frame (make-vect 10.0 0.0)
+                              (make-vect 0.0 10.0)
+                              (make-vect -10.0 0.0)))
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.49
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;; a ;;;;
+(def segs-outline (list (make-segment (make-vect 0.0 0.0) (make-vect 1.0 0.0))
+                        (make-segment (make-vect 1.0 0.0) (make-vect 1.0 1.0))
+                        (make-segment (make-vect 1.0 1.0) (make-vect 0.0 1.0))
+                        (make-segment (make-vect 0.0 1.0) (make-vect 0.0 0.0))))
+
+(def painter-outline (segments->painter segs-outline))
+
+;;;; b ;;;;
+(def segs-x (list (make-segment (make-vect 0.0 0.0) (make-vect 1.0 1.0))
+                  (make-segment (make-vect 0.0 1.0) (make-vect 1.0 0.0))))
+
+(def painter-x (segments->painter segs-x))
+
+;;;; c ;;;;
+(def segs-diamond (list (make-segment (make-vect 0.5 0.0) (make-vect 1.0 0.5))
+                        (make-segment (make-vect 1.0 0.5) (make-vect 0.5 1.0))
+                        (make-segment (make-vect 0.5 1.0) (make-vect 0.0 0.5))
+                        (make-segment (make-vect 0.0 0.5) (make-vect 0.5 0.0))))
+
+(def painter-diamond (segments->painter segs-diamond))
+
+;;;; d ;;;;
+(def segs-wave )
+
+(def painter-wave (segments->painter segs-wave))
+
+;;;; outline & pole ;;;;
+;; Using this painter for testing and playing around
+(def segs-pole (list (make-segment (make-vect 0.5 0.2) (make-vect 0.5 0.8))
+                     (make-segment (make-vect 0.35 0.2) (make-vect 0.65 0.2))))
+
+(def segs-pole-outline (append segs-pole segs-outline))
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Transforming and Combining Painters
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn transform-painter [painter origin corner1 corner2]
+  (fn [frame]
+    (let [m (frame-coord-map frame)
+          new-origin (m origin)]
+      (painter (make-frame new-origin
+                           (sub-vect (m corner1) new-origin)
+                           (sub-vect (m corner2) new-origin))))))
+
+
+(defn rotate90 [painter]
+  (transform-painter painter
+                     (make-vect 1.0 0.0)
+                     (make-vect 1.0 1.0)
+                     (make-vect 0.0 0.0)))
+
+;; Following produce same output
+;; 1) ((rotate90 (segments->painter segs-pole-outline)) frame-sq-10)
+;; 2) ((segments->painter segs-pole-outline) frame-ccw-90)
