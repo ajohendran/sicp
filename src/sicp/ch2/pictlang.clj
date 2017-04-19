@@ -1,5 +1,6 @@
 
-(ns sicp.ch2.pictlang)
+(ns sicp.ch2.pictlang
+  (:require [quil.core :as q]))
 
 
 ;; The exercises will be done out of order to make sure the basic elements
@@ -132,8 +133,44 @@
 ;;;;  Painting Primitives - Using Quil
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn draw-line [start end]
-  (println "Drawing Line -> Start:" start " End:" end))
+(defn quil-draw-lines [coordinates-list]
+  (for-each
+     (fn [coordinates]
+       (q/line (first coordinates)
+               (first (next coordinates))))
+     coordinates-list))
+
+(defn quil-paint [quil-draw-method]
+  (q/sketch
+       :size [500 500]
+       :draw (fn []
+               (q/with-translation [0.0 (q/height)]
+                 (q/background 255)
+                 (q/scale 1.0 -1.0)
+                 (quil-draw-method)))))
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Helper Functions for Painters
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def frame-sq-500 (make-frame (make-vect 0.0 0.0)
+                             (make-vect 500.0 0.0)
+                             (make-vect 0.0 500.0)))
+
+;; coordinate represented by ((x1 y1) (x2 y2))
+(defn make-line-coordinates [segment-list frame-mapper]
+  (map
+     (fn [segment]
+       (let [start-vect (frame-mapper (start-segment segment))
+             end-vect (frame-mapper (end-segment segment))]
+         (list (list (xcor-vect start-vect)
+                     (ycor-vect start-vect)) 
+               (list (xcor-vect end-vect)
+                     (ycor-vect end-vect)))))
+     segment-list))
 
 
 
@@ -142,52 +179,49 @@
 ;;;;  Painters
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn segments->painter [segment-list]
+(defn simulate-line [start end]
+  (println "Drawing Line -> Start:" start " End:" end))
+
+(defn segments->simulator [segment-list]
   (fn [frame]
-    (let [frame-mapper (frame-coord-map frame)]
+    (let [frame-mapper (frame-coord-map frame)
+          draw-line (fn [start end]
+                      (println "Drawing Line -> Start:" start " End:" end))]
       (for-each (fn [segment]
-                  (draw-line (frame-mapper (start-segment segment))
-                             (frame-mapper (end-segment segment))))
+                  (simulate-line (frame-mapper (start-segment segment))
+                                 (frame-mapper (end-segment segment))))
                 segment-list))))
 
-(defn picture->painter [pic]
+
+;; There is a problem with the painter concept/notion as such
+;; Drawing lines and so on requires setting up a canvas/window for graphics
+;; Each call to a painter call would setup a new canvas
+;; Transformation of painters (using 'beside' for example)
+;; means having multiple painters with each of them
+;; drawing lines -- all the lines drawn by each painter have to be on
+;; the same canvas
+;; To ensure all the lines/images end up on same canvas there has to be set up
+;; code before the 'complex' painter is called
+;; Another option is to  set a global canvas up.
+;; With a global canvas though, when and how do we reset it?
+;; The mit scheme code circumvents this problem by
+;; having a 'paint' method that takes a painter, takes care of
+;; graphics setup/teardown and
+;; calls the painter with a standard frame.
+;; Rotation, etc, is handled not by providing a different frame but by
+;; transforming the painter.
+
+(defn paint-with-frame [painter frame]
+  (quil-paint (fn [] (painter frame))))
+
+(defn paint [painter]
+  (paint-with-frame painter frame-sq-500))
+
+(defn segments->painter [segment-list]
   (fn [frame]
-    ))
+    (quil-draw-lines
+     (make-line-coordinates segment-list (frame-coord-map frame)))))
 
-
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;  Test Data for Painters
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-(def seg1 (make-segment (make-vect 0.2 0.2)
-                        (make-vect 0.5 0.5)))
-
-(def seg2 (make-segment (make-vect 0.3 0.3)
-                        (make-vect 0.75 0.75)))
-
-(def frame-sq-10 (make-frame (make-vect 0 0)
-                             (make-vect 10.0 0.0)
-                             (make-vect 0.0 10.0)))
-
-(def frame-sq-20 (make-frame (make-vect 0 0)
-                             (make-vect 20 0)
-                             (make-vect 0 20)))
-
-(def frame-rect-10-20 (make-frame (make-vect 0 0)
-                                  (make-vect 10 0)
-                                  (make-vect 0 20)))
-
-((segments->painter (list seg1 seg2)) frame-sq-10)
-((segments->painter (list seg1 seg2)) frame-sq-20)
-((segments->painter (list seg1 seg2)) frame-rect-10-20)
-
-
-(def frame-ccw-90 (make-frame (make-vect 10.0 0.0)
-                              (make-vect 0.0 10.0)
-                              (make-vect -10.0 0.0)))
 
 
 
@@ -226,6 +260,7 @@
 ;;;; outline & pole ;;;;
 ;; Using this painter for testing and playing around
 (def segs-pole (list (make-segment (make-vect 0.5 0.2) (make-vect 0.5 0.8))
+                     (make-segment (make-vect 0.5 0.8) (make-vect 0.6 0.6))
                      (make-segment (make-vect 0.35 0.2) (make-vect 0.65 0.2))))
 
 (def segs-pole-outline (append segs-pole segs-outline))
@@ -255,3 +290,67 @@
 ;; Following produce same output
 ;; 1) ((rotate90 (segments->painter segs-pole-outline)) frame-sq-10)
 ;; 2) ((segments->painter segs-pole-outline) frame-ccw-90)
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Test Data for Painters
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(def seg1 (make-segment (make-vect 0.2 0.2)
+                        (make-vect 0.5 0.5)))
+
+(def seg2 (make-segment (make-vect 0.3 0.3)
+                        (make-vect 0.75 0.75)))
+
+(def frame-sq-100 (make-frame (make-vect 0.0 0.0)
+                             (make-vect 100.0 0.0)
+                             (make-vect 0.0 100.0)))
+
+(def frame-sq-200 (make-frame (make-vect 0.0 0.0)
+                             (make-vect 200.0 0.0)
+                             (make-vect 0.0 200.0)))
+
+(def frame-rect-100-200 (make-frame (make-vect 0.0 0.0)
+                                  (make-vect 100.0 0.0)
+                                  (make-vect 0.0 200.0)))
+
+;; ((segments->painter (list seg1 seg2)) frame-sq-10)
+;; ((segments->painter (list seg1 seg2)) frame-sq-20)
+;; ((segments->painter (list seg1 seg2)) frame-rect-10-20)
+
+
+(def frame-ccw-90 (make-frame (make-vect 500.0 0.0)
+                              (make-vect 0.0 500.0)
+                              (make-vect -500.0 0.0)))
+
+
+(def frame-rect-10-5 (make-frame (make-vect 60.0 0.0)
+                                 (make-vect 40.0 30.0)
+                                 (make-vect -60.0 80.0)))
+
+(def frame-dmnd-x5y0 (make-frame (make-vect 250.0 0.0)
+                                 (make-vect 250.0 250.0)
+                                 (make-vect -250.0 250.0)))
+
+(def frame-dmnd-x0y5 (make-frame (make-vect 0.0 250.0)
+                                 (make-vect 250.0 -250.0)
+                                 (make-vect 250.0 250.0)))
+
+(def frame-dmnd-x10y5 (make-frame (make-vect 500.0 250.0)
+                                  (make-vect -250.0 -250.0)
+                                  (make-vect -250.0 250.0)))
+
+(def frame-x10y5 (make-frame (make-vect 500.0 250.0)
+                             (make-vect 0.0 -250.0)
+                             (make-vect -250.0 250.0)))
+
+(def frame-dmnd-x5y10 (make-frame (make-vect 250.0 500.0)
+                                  (make-vect -250.0 -250.0)
+                                  (make-vect 250.0 -250.0)))
+
+
+;;((segments->painter segs-pole-outline) frame-sq-100)
+
