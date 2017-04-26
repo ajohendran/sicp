@@ -238,11 +238,13 @@
 
 (def painter-outline (segments->painter segs-outline))
 
+
 ;;;; b ;;;;
 (def segs-x (list (make-segment (make-vect 0.0 0.0) (make-vect 1.0 1.0))
                   (make-segment (make-vect 0.0 1.0) (make-vect 1.0 0.0))))
 
 (def painter-x (segments->painter segs-x))
+
 
 ;;;; c ;;;;
 (def segs-diamond (list (make-segment (make-vect 0.5 0.0) (make-vect 1.0 0.5))
@@ -252,10 +254,32 @@
 
 (def painter-diamond (segments->painter segs-diamond))
 
+
 ;;;; d ;;;;
-(def segs-wave )
+(def segs-wave (list (make-segment (make-vect 0.25 0.0) (make-vect 0.35 0.5))
+                     (make-segment (make-vect 0.35 0.5) (make-vect 0.3 0.6))
+                     (make-segment (make-vect 0.3 0.6) (make-vect 0.15 0.4))
+                     (make-segment (make-vect 0.15 0.4) (make-vect 0.0 0.65))
+
+                     (make-segment (make-vect 0.0 0.85) (make-vect 0.15 0.6))
+                     (make-segment (make-vect 0.15 0.6) (make-vect 0.3 0.65))
+                     (make-segment (make-vect 0.3 0.65) (make-vect 0.4 0.65))
+                     (make-segment (make-vect 0.4 0.65) (make-vect 0.35 0.85))
+                     (make-segment (make-vect 0.35 0.85) (make-vect 0.4 1.0))
+
+                     (make-segment (make-vect 0.6 1.0) (make-vect 0.65 0.85))
+                     (make-segment (make-vect 0.65 0.85) (make-vect 0.6 0.65))
+                     (make-segment (make-vect 0.6 0.65) (make-vect 0.75 0.65))
+                     (make-segment (make-vect 0.75 0.65) (make-vect 1.0 0.35))
+
+                     (make-segment (make-vect 1.0 0.15) (make-vect 0.6 0.45))
+                     (make-segment (make-vect 0.6 0.45) (make-vect 0.75 0.0))
+
+                     (make-segment (make-vect 0.6 0.0) (make-vect 0.5 0.3))
+                     (make-segment (make-vect 0.5 0.3) (make-vect 0.4 0.0))))
 
 (def painter-wave (segments->painter segs-wave))
+
 
 ;;;; outline & pole ;;;;
 ;; Using this painter for testing and playing around
