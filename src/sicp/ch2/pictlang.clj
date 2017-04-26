@@ -142,7 +142,7 @@
 
 (defn quil-paint [quil-draw-method]
   (q/sketch
-       :size [500 500]
+       :size [700 700]
        :draw (fn []
                (q/with-translation [0.0 (q/height)]
                  (q/background 255)
@@ -157,8 +157,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def frame-sq-500 (make-frame (make-vect 0.0 0.0)
-                             (make-vect 500.0 0.0)
-                             (make-vect 0.0 500.0)))
+                              (make-vect 500.0 0.0)
+                              (make-vect 0.0 500.0)))
+
+(def frame-sq-700 (make-frame (make-vect 0.0 0.0)
+                              (make-vect 700.0 0.0)
+                              (make-vect 0.0 700.0)))
 
 ;; coordinate represented by ((x1 y1) (x2 y2))
 (defn make-line-coordinates [segment-list frame-mapper]
@@ -215,12 +219,72 @@
   (quil-paint (fn [] (painter frame))))
 
 (defn paint [painter]
-  (paint-with-frame painter frame-sq-500))
+  (paint-with-frame painter frame-sq-700))
 
 (defn segments->painter [segment-list]
   (fn [frame]
     (quil-draw-lines
      (make-line-coordinates segment-list (frame-coord-map frame)))))
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Test Data for Painters
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(def seg1 (make-segment (make-vect 0.2 0.2)
+                        (make-vect 0.5 0.5)))
+
+(def seg2 (make-segment (make-vect 0.3 0.3)
+                        (make-vect 0.75 0.75)))
+
+(def frame-sq-100 (make-frame (make-vect 0.0 0.0)
+                             (make-vect 100.0 0.0)
+                             (make-vect 0.0 100.0)))
+
+(def frame-sq-200 (make-frame (make-vect 0.0 0.0)
+                             (make-vect 200.0 0.0)
+                             (make-vect 0.0 200.0)))
+
+(def frame-rect-100-200 (make-frame (make-vect 0.0 0.0)
+                                  (make-vect 100.0 0.0)
+                                  (make-vect 0.0 200.0)))
+
+;; ((segments->painter (list seg1 seg2)) frame-sq-10)
+;; ((segments->painter (list seg1 seg2)) frame-sq-20)
+;; ((segments->painter (list seg1 seg2)) frame-rect-10-20)
+
+
+(def frame-ccw-90 (make-frame (make-vect 500.0 0.0)
+                              (make-vect 0.0 500.0)
+                              (make-vect -500.0 0.0)))
+
+
+(def frame-rect-10-5 (make-frame (make-vect 60.0 0.0)
+                                 (make-vect 40.0 30.0)
+                                 (make-vect -60.0 80.0)))
+
+(def frame-dmnd-x5y0 (make-frame (make-vect 250.0 0.0)
+                                 (make-vect 250.0 250.0)
+                                 (make-vect -250.0 250.0)))
+
+(def frame-dmnd-x0y5 (make-frame (make-vect 0.0 250.0)
+                                 (make-vect 250.0 -250.0)
+                                 (make-vect 250.0 250.0)))
+
+(def frame-dmnd-x10y5 (make-frame (make-vect 500.0 250.0)
+                                  (make-vect -250.0 -250.0)
+                                  (make-vect -250.0 250.0)))
+
+(def frame-x10y5 (make-frame (make-vect 500.0 250.0)
+                             (make-vect 0.0 -250.0)
+                             (make-vect -250.0 250.0)))
+
+(def frame-dmnd-x5y10 (make-frame (make-vect 250.0 500.0)
+                                  (make-vect -250.0 -250.0)
+                                  (make-vect 250.0 -250.0)))
 
 
 
@@ -304,7 +368,6 @@
                            (sub-vect (m corner1) new-origin)
                            (sub-vect (m corner2) new-origin))))))
 
-
 (defn rotate90 [painter]
   (transform-painter painter
                      (make-vect 1.0 0.0)
@@ -312,69 +375,104 @@
                      (make-vect 0.0 0.0)))
 
 ;; Following produce same output
-;; 1) ((rotate90 (segments->painter segs-pole-outline)) frame-sq-10)
-;; 2) ((segments->painter segs-pole-outline) frame-ccw-90)
+;; 1) (paint-with-frame (rotate90 (segments->painter segs-pole-outline)) frame-sq-500) 
+;; 2) (paint-with-frame (segments->painter segs-pole-outline) frame-ccw-90)
+
+(defn flip-vert [painter]
+  (transform-painter painter
+                     (make-vect 0.0 1.0)
+                     (make-vect 1.0 1.0)
+                     (make-vect 0.0 0.0)))
+
+(defn shrink-to-upper-right [painter]
+  (transform-painter painter
+                     (make-vect 0.5 0.5)
+                     (make-vect 1.0 0.5)
+                     (make-vect 0.5 1.0)))
+
+(defn squash-inwards [painter]
+  (transform-painter painter
+                     (make-vect 0.0 0.0)
+                     (make-vect 0.65 0.35)
+                     (make-vect 0.35 0.65)))
+
+(defn beside [painter1 painter2]
+  (let [split-point (make-vect 0.5 0.0)
+        paint-left (transform-painter painter1
+                                      (make-vect 0.0 0.0)
+                                      split-point
+                                      (make-vect 0.0 1.0))
+        paint-right (transform-painter painter2
+                                       split-point
+                                       (make-vect 1.0 0.0)
+                                       (make-vect 0.5 1.0))]
+    (fn [frame]
+      (paint-left frame)
+      (paint-right frame))))
 
 
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;  Test Data for Painters
+;;;;  Ex 2.50
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn flip-vert [painter]
+  (transform-painter painter
+                     (make-vect 0.0 1.0)
+                     (make-vect 1.0 1.0)
+                     (make-vect 0.0 0.0)))
+
+
+(defn rotate180 [painter]
+  (rotate90 (rotate90 painter)))
+
+(defn rotate270 [painter]
+  (rotate90 (rotate180 painter)))
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.51
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn below2 [painter1 painter2]
+  (let [split-point (make-vect 0.0 0.5)
+        paint-bottom (transform-painter painter1
+                                        (make-vect 0.0 0.0)
+                                        (make-vect 1.0 0.0)
+                                        split-point
+                                      )
+        paint-top (transform-painter painter2
+                                       split-point
+                                       (make-vect 1.0 0.5)
+                                       (make-vect 0.0 1.0))]
+    (fn [frame]
+      (paint-bottom frame)
+      (paint-top frame))))
+
+;; rotate 90 clockwise
+(defn rotate90-c [painter]
+  (transform-painter painter
+                     (make-vect 0.0 1.0)
+                     (make-vect 0.0 0.0)
+                     (make-vect 1.0 1.0)))
+
+;; can use rotate270 instead of rotaate90-c 
+(defn below [painter1 painter2]
+  (rotate90 (beside (rotate90-c painter1)
+                    (rotate90-c painter2))))
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Recursive Plans
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(def seg1 (make-segment (make-vect 0.2 0.2)
-                        (make-vect 0.5 0.5)))
-
-(def seg2 (make-segment (make-vect 0.3 0.3)
-                        (make-vect 0.75 0.75)))
-
-(def frame-sq-100 (make-frame (make-vect 0.0 0.0)
-                             (make-vect 100.0 0.0)
-                             (make-vect 0.0 100.0)))
-
-(def frame-sq-200 (make-frame (make-vect 0.0 0.0)
-                             (make-vect 200.0 0.0)
-                             (make-vect 0.0 200.0)))
-
-(def frame-rect-100-200 (make-frame (make-vect 0.0 0.0)
-                                  (make-vect 100.0 0.0)
-                                  (make-vect 0.0 200.0)))
-
-;; ((segments->painter (list seg1 seg2)) frame-sq-10)
-;; ((segments->painter (list seg1 seg2)) frame-sq-20)
-;; ((segments->painter (list seg1 seg2)) frame-rect-10-20)
-
-
-(def frame-ccw-90 (make-frame (make-vect 500.0 0.0)
-                              (make-vect 0.0 500.0)
-                              (make-vect -500.0 0.0)))
-
-
-(def frame-rect-10-5 (make-frame (make-vect 60.0 0.0)
-                                 (make-vect 40.0 30.0)
-                                 (make-vect -60.0 80.0)))
-
-(def frame-dmnd-x5y0 (make-frame (make-vect 250.0 0.0)
-                                 (make-vect 250.0 250.0)
-                                 (make-vect -250.0 250.0)))
-
-(def frame-dmnd-x0y5 (make-frame (make-vect 0.0 250.0)
-                                 (make-vect 250.0 -250.0)
-                                 (make-vect 250.0 250.0)))
-
-(def frame-dmnd-x10y5 (make-frame (make-vect 500.0 250.0)
-                                  (make-vect -250.0 -250.0)
-                                  (make-vect -250.0 250.0)))
-
-(def frame-x10y5 (make-frame (make-vect 500.0 250.0)
-                             (make-vect 0.0 -250.0)
-                             (make-vect -250.0 250.0)))
-
-(def frame-dmnd-x5y10 (make-frame (make-vect 250.0 500.0)
-                                  (make-vect -250.0 -250.0)
-                                  (make-vect 250.0 -250.0)))
-
-
-;;((segments->painter segs-pole-outline) frame-sq-100)
-
+(defn split-right [painter n]
+  (if (zero? n)
+    painter
+    (let [smaller (split-right painter (dec n))]
+      (beside painter (below smaller smaller)))))
