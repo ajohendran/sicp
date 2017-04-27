@@ -417,11 +417,11 @@
 ;;;;  Ex 2.50
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn flip-vert [painter]
+(defn flip-horiz [painter]
   (transform-painter painter
-                     (make-vect 0.0 1.0)
-                     (make-vect 1.0 1.0)
-                     (make-vect 0.0 0.0)))
+                     (make-vect 1.0 0.0)
+                     (make-vect 0.0 0.0)
+                     (make-vect 1.0 1.0)))
 
 
 (defn rotate180 [painter]
@@ -466,13 +466,110 @@
 
 
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex. 2.44 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn up-split [painter n]
+  (if (zero? n)
+    painter
+    (let [smaller (up-split painter (dec n))]
+      (below painter (beside smaller smaller)))))
+
+
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Recursive Plans
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
 (defn split-right [painter n]
-  (if (zero? n)
+  (if (= n 0)
     painter
     (let [smaller (split-right painter (dec n))]
       (beside painter (below smaller smaller)))))
+
+(defn corner-split [painter n]
+  (if (= n 0)
+    painter
+    (let [up (up-split painter (dec n))
+          right (split-right painter (dec n))
+          corner (corner-split painter (dec n))]
+      (beside (below painter
+                     (beside up up))
+              (below (below right right)
+                     corner)))))
+
+(defn square-limit [painter n]
+  (let [quarter (corner-split painter n)
+        half (beside (flip-horiz quarter) quarter)]
+    (below (flip-vert half) half)))
+
+(defn square-of-four [tl tr bl br]
+  (fn [painter]
+    (below (beside (bl painter) (br painter))
+           (beside (tl painter) (tr painter)))))
+
+(defn flipped-pairs [painter]
+  ((square-of-four identity flip-vert
+                   identity flip-vert)
+   painter))
+
+
+(defn square-limit [painter n]
+  (let [combine4 (square-of-four flip-horiz identity
+                                 rotate180 flip-vert)]
+    (combine4 (corner-split painter n))))
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex. 2.45
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn split [op1 op2]
+  (defn inner-split [painter n]
+    (if (= n 0)
+    painter
+    (let [smaller (inner-split painter (dec n))]
+      (op1 painter (op2 smaller smaller)))))
+  inner-split)
+
+(def up-split (split below beside))
+(def right-split (split beside below))
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex. 2.52
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;; a ;;;;
+
+(def segs-wave-smile (list 
+                      (make-segment (make-vect 0.45 0.75) (make-vect 0.55 0.75))))
+
+(def segs-wave-smile-outline (append (append segs-wave segs-wave-smile)
+                                     segs-outline) )
+
+(def painter-ws (segments->painter segs-wave-smile-outline))
+
+(defn corner-split-2 [painter n]
+  (if (= n 0)
+    painter
+    (let [up (up-split painter (dec n))
+          right (split-right painter (dec n))
+          corner (corner-split painter (dec n))]
+      (beside (below painter
+                     up)
+              (below right
+                     corner)))))
+
+
+(defn square-limit-2 [painter n]
+  (let [combine4 (square-of-four identity flip-horiz
+                                 flip-vert rotate180)]
+    (combine4 (corner-split painter n))))
