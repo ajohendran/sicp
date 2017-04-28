@@ -516,7 +516,6 @@
                    identity flip-vert)
    painter))
 
-
 (defn square-limit [painter n]
   (let [combine4 (square-of-four flip-horiz identity
                                  rotate180 flip-vert)]
@@ -529,13 +528,22 @@
 ;;;;  Ex. 2.45
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; following defn is wrong -- reference to inner-fn causes havoc
+;; with corner split because both right-split and up-split use it
+;; (defn split [op1 op2]
+;;   (defn inner-fn [painter n]
+;;     (if (= n 0)
+;;     painter
+;;     (let [smaller (inner-fn painter (dec n))]
+;;       (op1 painter (op2 smaller smaller)))))
+;;   inner-fn)
+
 (defn split [op1 op2]
-  (defn inner-split [painter n]
+  (fn [painter n]
     (if (= n 0)
     painter
-    (let [smaller (inner-split painter (dec n))]
-      (op1 painter (op2 smaller smaller)))))
-  inner-split)
+    (let [smaller ((split op1 op2) painter (dec n))]
+      (op1 painter (op2 smaller smaller))))))
 
 (def up-split (split below beside))
 (def right-split (split beside below))
@@ -543,33 +551,39 @@
 
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Ex. 2.52
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;; a ;;;;
 
-(def segs-wave-smile (list 
-                      (make-segment (make-vect 0.45 0.75) (make-vect 0.55 0.75))))
+(def segs-wave-smile
+  (list (make-segment (make-vect 0.45 0.75) (make-vect 0.55 0.75))))
 
 (def segs-wave-smile-outline (append (append segs-wave segs-wave-smile)
                                      segs-outline) )
 
 (def painter-ws (segments->painter segs-wave-smile-outline))
 
+
+;;;; b ;;;;
+
 (defn corner-split-2 [painter n]
   (if (= n 0)
     painter
     (let [up (up-split painter (dec n))
           right (split-right painter (dec n))
-          corner (corner-split painter (dec n))]
+          corner (corner-split-2 painter (dec n))]
       (beside (below painter
                      up)
               (below right
                      corner)))))
 
 
+;;;; c ;;;;
+
 (defn square-limit-2 [painter n]
-  (let [combine4 (square-of-four identity flip-horiz
-                                 flip-vert rotate180)]
-    (combine4 (corner-split painter n))))
+  (let [combine4 (square-of-four flip-horiz identity
+                                 rotate180 flip-vert)]
+    (combine4 (corner-split-2 (flip-horiz painter) n))))
+
