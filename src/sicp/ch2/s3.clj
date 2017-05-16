@@ -1,3 +1,4 @@
+
 (ns sicp.ch2.s3)
 
 
@@ -77,8 +78,17 @@
        (variable? v2)
        (= v1 v2)))
 
+;; (defn make-sum [a b]
+;;   (list '+ a b))
+
+(defn =number? [exp num]
+  (and (number? exp) (= exp num)))
+
 (defn make-sum [a b]
-  (list '+ a b))
+  (cond (=number? a 0) b
+        (=number? b 0) a
+        (and (number? a) (number? b)) (+ a b)
+        :else (list '+ a b)))
 
 (defn sum? [e]
   (and (seq? e)
@@ -90,8 +100,15 @@
 (defn augend [e]
   (first (next (next e))))
 
+;; (defn make-product [a b]
+;;   (list '* a b))
+
 (defn make-product [a b]
-  (list '* a b))
+  (cond (or (=number? a 0) (=number? b 0)) 0
+        (=number? a 1) b
+        (=number? b 1) a
+        (and (number? a) (number? b)) (* a b)
+        :else (list '* a b)))
 
 (defn product? [e]
   (and (seq? e)
@@ -116,23 +133,6 @@
                                       (deriv (multiplier exp) v)))
         :else (throw (RuntimeException.
                       (str  "unknown expression type -- DERIV " exp)))))
-
-
-(defn =number? [exp num]
-  (and (number? exp) (= exp num)))
-
-(defn make-sum [a b]
-  (cond (=number? a 0) b
-        (=number? b 0) a
-        (and (number? a) (number? b)) (+ a b)
-        :else (list '+ a b)))
-
-(defn make-product [a b]
-  (cond (or (=number? a 0) (=number? b 0)) 0
-        (=number? a 1) b
-        (=number? b 1) a
-        (and (number? a) (number? b)) (* a b)
-        :else (list '* a b)))
 
 
 
@@ -257,15 +257,168 @@
 (defn multiplicand [e]
   (first (next (next e))))
 
+(defn make-exponentiation [a b]
+  (cond (=number? b 0) 1
+        (=number? a 0) 0
+        (=number? b 1) a
+        (=number? a 1) 1
+        (and (number? a) (number? b)) (int (Math/pow a b))
+        :else (list a '** b)))
+
+(defn exponentiation? [e]
+  (and (seq? e)
+       (= '** (first (next e)))))
+
+(defn base [e]
+  (first e))
+
+(defn exponent [e]
+  (first (next (next e))))
+
+(defn make-difference [a b]
+  (cond (=number? b 0) a
+        (and (number? a) (number? b)) (- a b)
+        :else (list a '- b)))
 
 
-;; Skipping b fror now because it doesn't cover a fundamental learning idea
-;; Will return when time permits
-  
+;;;; b ;;;;
+
+(defn precedence [op]
+  (cond (= op '+) 0
+        (= op '*) 1
+        (= op '**) 2
+        :else (throw (Exception. (str "Unknown operator " op)))))
+
+(defn higher-precedence [op1 op2]
+  (> (precedence op1) (precedence op2)))
+
+(defn lower-precedence [op1 op2]
+  (< (precedence op1) (precedence op2)))
+
+(defn right-associative? [op]
+  (= op '**))
+
+(defn trim [n coll]
+  (if (or (<= n 0) (empty? coll))
+    coll
+    (recur (dec n) (next coll))))
+
+(defn head [n coll]
+  (if (or (empty? coll) (< n 1))
+    '()
+    (cons (first coll) (head (dec n) (next coll)))))
+
+(defn tail [n coll]
+  (let [remaining (- (count coll) n)]
+    (trim remaining coll)))
+
+(defn split-point [n coll]
+  (if (or (empty? coll) (<= n 0))
+    (list '() coll)
+    (let [res (split-point (dec n) (next coll))]
+        (list (cons (first coll) (first res)) (second res)))))
+
+(defn convert [exp]
+  (cond (empty? exp) exp
+        (exmpty? (trim 3 exp)) exp
+        :else (convert (convert-1 exp))))
+
+(defn convert-1 [exp]
+  (cond (empty? exp) exp
+        (empty? (trim 3 exp)) (list exp)
+        :else (let [first-op (second exp)
+                    second-op (first (trim 3 exp))
+                    group-first (fn [] (cons (head 3 exp) (trim 3 exp)))
+                    group-next (fn [] (concat (head 2 exp) (convert-1
+                                                            (trim 2 exp))))]
+                (cond (higher-precedence first-op second-op) (group-first)
+                      (lower-precedence first-op second-op) (group-next)
+                      (right-associative? first-op) (group-next)
+                      :else (group-first)))))
+
+;; (convert '())
+;; ;; => ()
+;; (convert '(x + y))
+;; ;; => (x + y)
+;; (convert '(x * y))
+;; ;; => (x * y)
+;; (convert '(x ** y))
+;; ;; => (x ** y)
+;; (convert '(x + y + z))
+;; ;; => ((x + y) + z)
+;; (convert '(x * y * z))
+;; ;; => ((x * y) * z)
+;; (convert '(x + y * z))
+;; ;; => (x + (y * z))
+;; (convert '(x * y + z))
+;; ;; => ((x * y) + z)
+;; (convert '(x * y + z * a))
+;; ;; => ((x * y) + (z * a))
+;; (convert '(x * y + z + a))
+;; ;; => (((x * y) + z) + a)
+;; (convert '(x + y + z * a))
+;; ;; => ((x + y) + (z * a))
+;; (convert '(x + y * z + a))
+;; ;; => ((x + (y * z)) + a)
+;; (convert '(x ** y + z + a))
+;; ;; => (((x ** y) + z) + a)
+;; (convert '(x * y ** z + a))
+;; ;; => ((x * (y ** z)) + a)
+;; (convert '(x + y ** z * a))
+;; ;; => (x + ((y ** z) * a))
+;; (convert '(x * y + z ** a))
+;; ;; => ((x * y) + (z ** a))
+;; (convert '(x + y ** z))
+;; ;; => (x + (y ** z))
+;; (convert '(x ** y + z))
+;; ;; => ((x ** y) + z)
+;; (convert '(x ** y * z))
+;; ;; => ((x ** y) * z)
+;; (convert '(x * y ** z))
+;; ;; => (x * (y ** z))
+;; (convert '(x ** y ** z ** a ** b))
+;; ;; => (x ** (y ** (z ** (a ** b))))
+;; (convert '(x * y ** z * a ** b))
+;; ;; => ((x * (y ** z)) * (a ** b))
+;; (convert '(x * y + z ** a * b))
+;; ;; => ((x * y) + ((z ** a) * b))
+;; (convert '(x + y * z ** a ** b + c))
+;; ;; => ((x + (y * (z ** (a ** b)))) + c)
+;; (convert '(w * x ** y * z ** a ** b))
+;; ;; => ((w * (x ** y)) * (z ** (a ** b)))
+;; (convert '(w * x ** y + z ** a ** b))
+;; ;; => ((w * (x ** y)) + (z ** (a ** b)))
+;; (convert '(w ** x * y ** z + a ** b))
+;; ;; => (((w ** x) * (y ** z)) + (a ** b))
+;; (convert '(w + x * y + z ** a * b))
+;; ;; => ((w + (x * y)) + ((z ** a) * b))
+;; (convert '(w + x * y + z ** (a * b)))
+;; ;; => ((w + (x * y)) + (z ** (a * b)))
+;; (convert '(w * x * y ** z + a + b))
+;; ;; => ((((w * x) * (y ** z)) + a) + b)
+;; (convert '(w * x * y ** z + a * b))
+;; ;; => (((w * x) * (y ** z)) + (a * b))
+;; (convert '(w * x * y ** z * a + b))
+;; ;; => ((((w * x) * (y ** z)) * a) + 
+
+
+(defn every-nth [n exp]
+  (cond (< n 1) (throw (Exception. "Positive number expected for n"))
+        (empty? exp) '()
+        :else (cons (first exp) (every-nth n (trim n exp)))))
+
+(defn get-operators [exp]
+  (every-nth 2 (next exp)))
+
+(defn lowest-precedence? [op coll]
+  (foldl (fn [])))
+
 
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Ex 2.58
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+ 
 
