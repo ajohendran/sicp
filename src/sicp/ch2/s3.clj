@@ -313,12 +313,6 @@
   (let [remaining (- (count coll) n)]
     (trim remaining coll)))
 
-;; One approach is to preprocess the expression
-(defn convert [exp]
-  (cond (empty? exp) exp
-        (exmpty? (trim 3 exp)) exp
-        :else (convert (convert-1 exp))))
-
 (defn convert-1 [exp]
   (cond (empty? exp) exp
         (empty? (trim 3 exp)) (list exp)
@@ -332,6 +326,12 @@
                       (not (= first-op second-op)) (group-first)
                       (right-associative? first-op) (group-next)
                       :else (group-first)))))
+
+;; One approach is to preprocess the expression
+(defn convert [exp]
+  (cond (empty? exp) exp
+        (empty? (trim 3 exp)) exp
+        :else (convert (convert-1 exp))))
 
 ;; (convert '())
 ;; ;; => ()
@@ -449,6 +449,12 @@
       (list coll '())
       (split-point i coll))))
 
+(defn split-until-last [pred coll]
+  (if (empty? coll)
+    (list '() coll)
+    (let [result (split-until-first pred (next coll))]
+      (list (cons (first coll) (first result)) (second result)))))
+
 (defn extract-variable [exp]
   (if (= 1 (count exp))
     (first exp)
@@ -559,33 +565,33 @@
 ;; TRACE t12450: => (((y ** x) * 5) + ((y ** x) * 5))
 ;; (((y ** x) * 5) + ((y ** x) * 5))
 
-;; sicp.ch2.s3> (deriv '((5 * x * y ** x) + (x * ((y ** x) * 5))) 'x)
-;; TRACE t12465: (sicp.ch2.s3/deriv ((5 * x * y ** x) + (x * ((y ** x) * 5))) x)
-;; TRACE t12466: | (sicp.ch2.s3/deriv (5 * x * y ** x) x)
-;; TRACE t12467: | | (sicp.ch2.s3/deriv (y ** x) x)
-;; TRACE t12468: | | | (sicp.ch2.s3/deriv y x)
-;; TRACE t12468: | | | => 0
-;; TRACE t12467: | | => 0
-;; TRACE t12469: | | (sicp.ch2.s3/deriv (5 * x) x)
-;; TRACE t12470: | | | (sicp.ch2.s3/deriv x x)
-;; TRACE t12470: | | | => 1
-;; TRACE t12471: | | | (sicp.ch2.s3/deriv 5 x)
-;; TRACE t12471: | | | => 0
-;; TRACE t12469: | | => 5
-;; TRACE t12466: | => ((y ** x) * 5)
-;; TRACE t12472: | (sicp.ch2.s3/deriv (x * ((y ** x) * 5)) x)
-;; TRACE t12473: | | (sicp.ch2.s3/deriv ((y ** x) * 5) x)
-;; TRACE t12474: | | | (sicp.ch2.s3/deriv 5 x)
-;; TRACE t12474: | | | => 0
-;; TRACE t12475: | | | (sicp.ch2.s3/deriv (y ** x) x)
-;; TRACE t12476: | | | | (sicp.ch2.s3/deriv y x)
-;; TRACE t12476: | | | | => 0
-;; TRACE t12475: | | | => 0
-;; TRACE t12473: | | => 0
-;; TRACE t12477: | | (sicp.ch2.s3/deriv x x)
-;; TRACE t12477: | | => 1
-;; TRACE t12472: | => ((y ** x) * 5)
-;; TRACE t12465: => (((y ** x) * 5) + ((y ** x) * 5))
+;; sicp.ch2.s3> (deriv (convert '((5 * x * y ** x) + (x * ((y ** x) * 5)))) 'x)
+;; TRACE t10942: (sicp.ch2.s3/deriv ((5 * x * y ** x) + (x * ((y ** x) * 5))) x)
+;; TRACE t10943: | (sicp.ch2.s3/deriv (5 * x * y ** x) x)
+;; TRACE t10944: | | (sicp.ch2.s3/deriv (y ** x) x)
+;; TRACE t10945: | | | (sicp.ch2.s3/deriv y x)
+;; TRACE t10945: | | | => 0
+;; TRACE t10944: | | => 0
+;; TRACE t10946: | | (sicp.ch2.s3/deriv (5 * x) x)
+;; TRACE t10947: | | | (sicp.ch2.s3/deriv x x)
+;; TRACE t10947: | | | => 1
+;; TRACE t10948: | | | (sicp.ch2.s3/deriv 5 x)
+;; TRACE t10948: | | | => 0
+;; TRACE t10946: | | => 5
+;; TRACE t10943: | => ((y ** x) * 5)
+;; TRACE t10949: | (sicp.ch2.s3/deriv (x * ((y ** x) * 5)) x)
+;; TRACE t10950: | | (sicp.ch2.s3/deriv ((y ** x) * 5) x)
+;; TRACE t10951: | | | (sicp.ch2.s3/deriv 5 x)
+;; TRACE t10951: | | | => 0
+;; TRACE t10952: | | | (sicp.ch2.s3/deriv (y ** x) x)
+;; TRACE t10953: | | | | (sicp.ch2.s3/deriv y x)
+;; TRACE t10953: | | | | => 0
+;; TRACE t10952: | | | => 0
+;; TRACE t10950: | | => 0
+;; TRACE t10954: | | (sicp.ch2.s3/deriv x x)
+;; TRACE t10954: | | => 1
+;; TRACE t10949: | => ((y ** x) * 5)
+;; TRACE t10942: => (((y ** x) * 5) + ((y ** x) * 5))
 ;; (((y ** x) * 5) + ((y ** x) * 5))
 
 
