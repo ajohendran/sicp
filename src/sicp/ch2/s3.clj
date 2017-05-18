@@ -329,9 +329,10 @@
 
 ;; One approach is to preprocess the expression
 (defn convert [exp]
-  (cond (empty? exp) exp
-        (empty? (trim 3 exp)) exp
-        :else (convert (convert-1 exp))))
+  (let [exp2 (map (fn [e] (if (coll? e) (convert e) e)) exp)]
+    (cond (empty? exp2) exp2
+        (empty? (trim 3 exp)) exp2
+        :else (convert (convert-1 exp2)))))
 
 ;; (convert '())
 ;; ;; => ()
@@ -396,7 +397,9 @@
 ;; (convert '(w * x * y ** z + a * b))
 ;; ;; => (((w * x) * (y ** z)) + (a * b))
 ;; (convert '(w * x * y ** z * a + b))
-;; ;; => ((((w * x) * (y ** z)) * a) + 
+;; ;; => ((((w * x) * (y ** z)) * a) + b)
+;; (convert '(w * x * y ** z * (a + b ** (c * d * e) * f ) + d))
+;; ;; ((((w * x) * (y ** z)) * (a + ((b ** ((c * d) * e)) * f))) + d)
 
 ;; Other approach is to provide appropriate selectors
 ;; Not the most efficient approach
@@ -443,17 +446,23 @@
     (let [res (split-point (dec n) (next coll))]
       (list (cons (first coll) (first res)) (second res)))))
 
+;; severalw ays to write this funtion
 (defn split-until-last [pred coll]
   (let [i (last-index pred coll)]
     (if (neg? i)
       (list coll '())
       (split-point i coll))))
 
+;; perhaps not the most efficient way because of repeated list construction
+;; OTOH clarity is good. Clojure's shared data structure tree should help
+;; with performance
 (defn split-until-last [pred coll]
-  (if (empty? coll)
-    (list '() coll)
-    (let [result (split-until-first pred (next coll))]
-      (list (cons (first coll) (first result)) (second result)))))
+  (foldr (fn [e res]
+           (cond (seq (second res)) (list (cons e (first res)) (second res))
+                 (pred e) (list '() (cons e (first res)))
+                 :else (list (cons e (first res)) '())))
+         '(() ())
+         coll))
 
 (defn extract-variable [exp]
   (if (= 1 (count exp))
@@ -566,39 +575,39 @@
 ;; (((y ** x) * 5) + ((y ** x) * 5))
 
 ;; sicp.ch2.s3> (deriv (convert '((5 * x * y ** x) + (x * ((y ** x) * 5)))) 'x)
-;; TRACE t10942: (sicp.ch2.s3/deriv ((5 * x * y ** x) + (x * ((y ** x) * 5))) x)
-;; TRACE t10943: | (sicp.ch2.s3/deriv (5 * x * y ** x) x)
-;; TRACE t10944: | | (sicp.ch2.s3/deriv (y ** x) x)
-;; TRACE t10945: | | | (sicp.ch2.s3/deriv y x)
-;; TRACE t10945: | | | => 0
-;; TRACE t10944: | | => 0
-;; TRACE t10946: | | (sicp.ch2.s3/deriv (5 * x) x)
-;; TRACE t10947: | | | (sicp.ch2.s3/deriv x x)
-;; TRACE t10947: | | | => 1
-;; TRACE t10948: | | | (sicp.ch2.s3/deriv 5 x)
-;; TRACE t10948: | | | => 0
-;; TRACE t10946: | | => 5
-;; TRACE t10943: | => ((y ** x) * 5)
-;; TRACE t10949: | (sicp.ch2.s3/deriv (x * ((y ** x) * 5)) x)
-;; TRACE t10950: | | (sicp.ch2.s3/deriv ((y ** x) * 5) x)
-;; TRACE t10951: | | | (sicp.ch2.s3/deriv 5 x)
-;; TRACE t10951: | | | => 0
-;; TRACE t10952: | | | (sicp.ch2.s3/deriv (y ** x) x)
-;; TRACE t10953: | | | | (sicp.ch2.s3/deriv y x)
-;; TRACE t10953: | | | | => 0
-;; TRACE t10952: | | | => 0
-;; TRACE t10950: | | => 0
-;; TRACE t10954: | | (sicp.ch2.s3/deriv x x)
-;; TRACE t10954: | | => 1
-;; TRACE t10949: | => ((y ** x) * 5)
-;; TRACE t10942: => (((y ** x) * 5) + ((y ** x) * 5))
+;; TRACE t11034: (sicp.ch2.s3/deriv (((5 * x) * (y ** x)) + (x * ((y ** x) * 5))) x)
+;; TRACE t11035: | (sicp.ch2.s3/deriv ((5 * x) * (y ** x)) x)
+;; TRACE t11036: | | (sicp.ch2.s3/deriv (y ** x) x)
+;; TRACE t11037: | | | (sicp.ch2.s3/deriv y x)
+;; TRACE t11037: | | | => 0
+;; TRACE t11036: | | => 0
+;; TRACE t11038: | | (sicp.ch2.s3/deriv (5 * x) x)
+;; TRACE t11039: | | | (sicp.ch2.s3/deriv x x)
+;; TRACE t11039: | | | => 1
+;; TRACE t11040: | | | (sicp.ch2.s3/deriv 5 x)
+;; TRACE t11040: | | | => 0
+;; TRACE t11038: | | => 5
+;; TRACE t11035: | => ((y ** x) * 5)
+;; TRACE t11041: | (sicp.ch2.s3/deriv (x * ((y ** x) * 5)) x)
+;; TRACE t11042: | | (sicp.ch2.s3/deriv ((y ** x) * 5) x)
+;; TRACE t11043: | | | (sicp.ch2.s3/deriv 5 x)
+;; TRACE t11043: | | | => 0
+;; TRACE t11044: | | | (sicp.ch2.s3/deriv (y ** x) x)
+;; TRACE t11045: | | | | (sicp.ch2.s3/deriv y x)
+;; TRACE t11045: | | | | => 0
+;; TRACE t11044: | | | => 0
+;; TRACE t11042: | | => 0
+;; TRACE t11046: | | (sicp.ch2.s3/deriv x x)
+;; TRACE t11046: | | => 1
+;; TRACE t11041: | => ((y ** x) * 5)
+;; TRACE t11034: => (((y ** x) * 5) + ((y ** x) * 5))
 ;; (((y ** x) * 5) + ((y ** x) * 5))
 
 
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;  Ex 2.58
+;;;;  Representing Sets
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
  
