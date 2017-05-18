@@ -607,8 +607,64 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;  Representing Sets
+;;;;  Representing Sets - Sets as Unordered Lists
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
- 
+(defn make-set []
+  '())
 
+;; avoiding using the symbol 'set' as parameter because it is a clojrue keyword
+(defn element-of-set? [x coll]
+  (cond (empty? coll) false
+        (= x (first coll)) true
+        :else (element-of-set? x (next coll))))
+
+(defn element-of-set? [x coll]
+  (and (not (empty? coll))
+       (or (= x (first coll))
+           (element-of-set? x (next coll)))))
+
+(defn adjoin-set [x coll]
+  (if (element-of-set? x coll)
+    coll
+    (cons x coll)))
+
+(defn intersection-set [set1 set2]
+  (cond (or (empty? set1) (empty? set2))
+        '()
+        (element-of-set? (first set1) set2)
+        (cons (first set1) (intersection-set (next set1) set2))
+        :else
+        (intersection-set (next set1) set2)))
+
+(defn intersection-set [set1 set2]
+  (reduce (fn [res e]
+            (if (element-of-set? e set2)
+              (adjoin-set e res)
+              res))
+          (make-set)
+          set1))
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.59
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn union-set [set1 set2]
+  (if (empty? set1)
+    set2
+    (union-set (next set1) (adjoin-set (first set1) set2))))
+
+(defn union-set [set1 set2]
+  (reduce (fn [res e] (adjoin-set e res))
+          set2
+          set1))
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.60
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
