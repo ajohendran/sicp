@@ -35,6 +35,7 @@
 
 
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Ex 2.54
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -56,6 +57,7 @@
 
 
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Ex 2.55
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -63,6 +65,7 @@
 ;; (car ''abracadabra)
 
 ;; ''abracadabra is equivalent to (quote (quote abracadabra)
+
 
 
 
@@ -137,6 +140,7 @@
 
 
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Ex 2.56
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -188,6 +192,7 @@
 
 
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Ex 2.57
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -214,6 +219,7 @@
 
 (defn multiplicand [e]
   (foldr make-product 1 (next (next e))))
+
 
 
 
@@ -606,6 +612,7 @@
 
 
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Representing Sets - Sets as Unordered Lists
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -640,10 +647,11 @@
 (defn intersection-set [set1 set2]
   (reduce (fn [res e]
             (if (element-of-set? e set2)
-              (adjoin-set e res)
+              (cons e res)
               res))
-          (make-set)
+          '()
           set1))
+
 
 
 
@@ -665,6 +673,155 @@
 
 
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Ex 2.60
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;element-of-set? does not change
+
+;; adjoin-set will just be a cons because we do no have to check for membeship
+(def adjoin-set cons)
+
+;; union-set will simply be O(n) operation, same as append
+(def union-set concat)
+
+;; insersection-set is more interesting
+;; we also have to keep track of how many times an element occurs in each set
+
+;; The following is not correct
+;; sicp.ch2.s3> (intersection-set '(4 3) '(5 3 6 7 3) )
+;; (3)
+;; sicp.ch2.s3> (intersection-set '(5 3 6 7 3) '(4 3) )
+;; (3 3)
+
+;; intersecion will remain O(n^2) operation
+;; If check and then remove, it will be O(n*2n) operation
+;; because we have to remove the first occurence of matching element from second set
+
+;; We can improve efficiency by using move-to-front
+
+(defn move-to-front [e coll]
+  (if (or (empty? coll) (= e (first coll)))
+    coll
+    (let [result (move-to-front e (next coll))]
+      (if (= e (first result))
+        (cons (first result) (cons (first coll) (next result)))
+        (cons (first coll) result)))))
+
+(defn intersection-set [set1 set2]
+  (if (or (empty? set1) (empty? set2))
+    '()
+    (let [modified-set2 (move-to-front (first set1) set2)]
+      (if (= (first set1) (first modified-set2))
+        (cons (first set1) (intersection-set (next set1) (next modified-set2)))
+        (intersection-set (next set1) set2)))))
+
+;; sicp.ch2.s3> (intersection-set '(5 3 6 7 3) '(4 3) )
+;; (3)
+;; sicp.ch2.s3> (intersection-set '(5 3 6 7 3) '(4 3) )
+;; (3
+;; sicp.ch2.s3> (intersection-set '(5 3 6 7 3 5 5) '(4 3 3 3 5 5) )
+;; (5 3 3 5)
+
+;; sets with duplicates are pretty much arbitrary lists.
+;; not sure why we'd use this particular represention instead of
+;; representing data as straight up lists and use regular list operations.
+
+;; After reading online, this datastructure is called a "multiset" officially. 
+;; I suppose conceptually, multisets are different from lists becuase order
+;; does not matter with multisets
+
+;; https://oeis.org/wiki/Multisets
+;; Above website mentions a use - set of prime factors dividing a number
+;; we may wish to compare prime factors for various large numbers
+;; see what they have in common using intersect-set
+
+;; I suppose one use is to count number of occurences of an event every day of the
+;; week -- like how many times I brush my teeth per day .
+;; A multiset represents a week. Then we could use union to collect the occurences
+;; per year. Intersect could be used to determine how many times I was consistent
+;; in brushing my teeth and on those consistent days how many times I brushed.
+;; element-of-set can be used to determine if I happened to brush my teeth
+;; more than twice per day on any given week and if that happened,
+;; on how many days did that happen (a rather unlikely occurence by any means)
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Sets as Ordered Lists
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn element-of-set? [e set1]
+  (cond (empty? set1) false
+        (= e (first set1)) true
+        (< e (first set1)) false
+        :else (element-of-set? e (next set1))))
+
+(defn insersection-set [set1 set2]
+  (if (or (empty? set1) (empty? set2))
+    '()
+    (let [x1 (first set1)
+          x2 (first set2)]
+      (cond 
+      (= x1 x2)  (cons x1 (intersection-set (next set1) (next set2)))
+      (< x1 x2)  (intersection-set (next set1) set2)
+      :else (intersection-set set1 (next set2))))))
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.61
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn adjoin-set [e set1]
+  (cond (or (empty? set1) (< e (first set1))) (cons e set1)
+        (= e (first set1)) set1
+        :else (cons (first set1) (adjoin-set e (next set1)))))
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.62
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn union-set [set1 set2]
+  (cond (empty? set1) set2
+        (empty? set2) set1
+        :else (let [x1 (first set1)
+                    x2 (first set2)]
+                (cond 
+                  (= x1 x2) (cons x1 (union-set (next set1) (next set2)))
+                  (< x1 x2) (cons x1 (union-set (next set1) set2))
+                  :else (cons x2 (union-set set1 (next set2)))))))
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Sets as Binary Trees
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defn entry [tree] (first tree))
+(defn left-branch [tree] (fnext tree))
+(defn right-branch [tree] (first (nnext tree)))
+(defn make-tree [e left right] (list e left right))
+
+(defn element-of-set? [x s]
+  (cond (empty? s) false
+        (= x (entry s)) true
+        (< x (entry s)) (element-of-set? x (left-branch s))
+        :else (element-of-set? x (right-branch s))))
+
+
+(defn adjoin-set [x s]
+  (cond (empty? s) (make-tree x '() '())
+        (< x (entry s))))
