@@ -809,7 +809,6 @@
 ;;;;  Sets as Binary Trees
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
 (defn entry [tree] (first tree))
 (defn left-branch [tree] (fnext tree))
 (defn right-branch [tree] (first (nnext tree)))
@@ -824,4 +823,72 @@
 
 (defn adjoin-set [x s]
   (cond (empty? s) (make-tree x '() '())
-        (< x (entry s))))
+        (= x (entry s)) s
+        (< x (entry s)) (make-tree (entry s)
+                                   (adjoin-set x (left-branch s))
+                                   (right-branch s))
+        :else (make-tree (entry s)
+                         (left-branch s)
+                         (adjoin-set x (right-branch s)))))
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.63
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn append [l1 l2] (concat l1 l2))
+(defn mycons [e l] (cons e l))
+(defn tree->list-1 [tree]
+  (if (empty? tree) '()
+      (append (tree->list-1 (left-branch tree))
+              (mycons (entry tree)
+                    (tree->list-1 (right-branch tree))))))
+
+(defn copy-to-list [t res]
+  (if (empty? t)
+    res
+    (copy-to-list (left-branch t) (mycons (entry t)
+                                        (copy-to-list (right-branch t) res)))))
+
+(defn tree->list-2 [tree]    
+    (copy-to-list tree '()))
+
+
+;;;; a ;;;;
+
+;; Yes, same result for all trees
+
+(def t1 (reduce (fn [r e] (adjoin-set e r)) '() '(7 3 9 1 5 11)))
+;; (7 (3 (1 () ()) (5 () ())) (9 () (11 () ())))
+
+(def t2 (reduce (fn [r e] (adjoin-set e r)) '() '(3 1 7 5 9 11)))
+;; (3 (1 () ()) (7 (5 () ()) (9 () (11 () ()))))
+
+(def t3 (reduce (fn [r e] (adjoin-set e r)) '() '(5 3 9 1 7 11)))
+;; (5 (3 (1 () ()) ()) (9 (7 () ()) (11 () ())))
+
+(tree->list-1 t1)
+;; => (1 3 5 7 9 11)
+(tree->list-2 t1)
+;; => (1 3 5 7 9 11)
+
+(tree->list-1 t2)
+;; => (1 3 5 7 9 11)
+(tree->list-2 t2)
+;; => (1 3 5 7 9 11)
+
+(tree->list-1 t3)
+;; => (1 3 5 7 9 11)
+(tree->list-2 t3)
+;; => (1 3 5 7 9 11)
+
+
+;; (def t4 (reduce (fn [r e] (adjoin-set e r)) '() '(5 3 2 4 7 6 8)))
+;; (def t5 (reduce (fn [r e] (adjoin-set e r)) '() '(5 3 9)))
+;; (def t6 (reduce (fn [r e] (adjoin-set e r)) '() '(5)))
+
+
+;;;; b ;;;;
