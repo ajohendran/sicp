@@ -839,8 +839,15 @@
 ;;;;  Ex 2.63
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn append [l1 l2] (concat l1 l2))
+;;(defn append [l1 l2] (concat l1 l2))
+
+(defn append [l1 l2]
+  (if (empty? l1)
+    l2
+    (mycons (first l1) (append (next l1) l2))))
+
 (defn mycons [e l] (cons e l))
+
 (defn tree->list-1 [tree]
   (if (empty? tree) '()
       (append (tree->list-1 (left-branch tree))
@@ -861,34 +868,126 @@
 
 ;; Yes, same result for all trees
 
-(def t1 (reduce (fn [r e] (adjoin-set e r)) '() '(7 3 9 1 5 11)))
-;; (7 (3 (1 () ()) (5 () ())) (9 () (11 () ())))
+;; (def t1 (reduce (fn [r e] (adjoin-set e r)) '() '(7 3 9 1 5 11)))
+;; ;; (7 (3 (1 () ()) (5 () ())) (9 () (11 () ())))
 
-(def t2 (reduce (fn [r e] (adjoin-set e r)) '() '(3 1 7 5 9 11)))
-;; (3 (1 () ()) (7 (5 () ()) (9 () (11 () ()))))
+;; (def t2 (reduce (fn [r e] (adjoin-set e r)) '() '(3 1 7 5 9 11)))
+;; ;; (3 (1 () ()) (7 (5 () ()) (9 () (11 () ()))))
 
-(def t3 (reduce (fn [r e] (adjoin-set e r)) '() '(5 3 9 1 7 11)))
-;; (5 (3 (1 () ()) ()) (9 (7 () ()) (11 () ())))
+;; (def t3 (reduce (fn [r e] (adjoin-set e r)) '() '(5 3 9 1 7 11)))
+;; ;; (5 (3 (1 () ()) ()) (9 (7 () ()) (11 () ())))
 
-(tree->list-1 t1)
-;; => (1 3 5 7 9 11)
-(tree->list-2 t1)
-;; => (1 3 5 7 9 11)
+;; (tree->list-1 t1)
+;; ;; => (1 3 5 7 9 11)
+;; (tree->list-2 t1)
+;; ;; => (1 3 5 7 9 11)
 
-(tree->list-1 t2)
-;; => (1 3 5 7 9 11)
-(tree->list-2 t2)
-;; => (1 3 5 7 9 11)
+;; (tree->list-1 t2)
+;; ;; => (1 3 5 7 9 11)
+;; (tree->list-2 t2)
+;; ;; => (1 3 5 7 9 11)
 
-(tree->list-1 t3)
-;; => (1 3 5 7 9 11)
-(tree->list-2 t3)
-;; => (1 3 5 7 9 11)
+;; (tree->list-1 t3)
+;; ;; => (1 3 5 7 9 11)
+;; (tree->list-2 t3)
+;; ;; => (1 3 5 7 9 11)
 
 
-;; (def t4 (reduce (fn [r e] (adjoin-set e r)) '() '(5 3 2 4 7 6 8)))
-;; (def t5 (reduce (fn [r e] (adjoin-set e r)) '() '(5 3 9)))
-;; (def t6 (reduce (fn [r e] (adjoin-set e r)) '() '(5)))
 
+;; NOTE: list->tree defined below, in next exercise.
+;; (def bt1 (list->tree [5]))
+;; (def bt2 (list->tree [3 5]))
+;; (def bt3 (list->tree [5 7]))
+;; (def bt4 (list->tree [3 5 7]))
+;; (def bt5 (list->tree [2 3 4 5 7 8]))
+;; (def bt6 (list->tree [2 3 4 5 6 7 8]))
+;; (def bt7 (list->tree (range 1 11)))
+;; (def bt8 (list->tree (range 1 21)))
+  
 
 ;;;; b ;;;;
+
+;; tree->list-1 grows more slowly.
+
+;; tree->list-2 grows linearly in terms of number of steps.
+;; For every element, there are 3 steps
+;; If the element has a child, 3 more steps are added
+;; For n elements, there are (3n+2) total method calls
+
+;; For instance
+;; abbreviating tree->list-2 as ttl2, copy-to-list as ctl
+;; (ttl2 (5 (3 () ()) (7 () ()))))
+;; (ctl (5 (3 () ()) (7 () ())))
+;; (ctl 3 (cons 5 (ctl 7 nil)))
+;; (ctl 3 (cons 5 (ctl nil (cons 7 (ctl nil nil)))))
+;; (ctl 3 (cons 5 (ctl nil (cons 7 nil))))
+;; (ctl 3 (cons 5 (ctl nil (7))))
+;; (ctl 3 (cons 5 (7)))
+;; (ctl 3 (5 7))
+;; (ctl nil (cons 3 (ctl nil (5 7))))
+;; (ctl nil (cons 3 (5 7)))
+;; (ctl nil (3 5 7))
+;; ==> ( 3 5 7)
+
+
+;; sicp.ch2.s3> (tree->list-2 (list->tree [3 5 7]))
+;; TRACE t10838: (sicp.ch2.s3/tree->list-2 (5 (3 () ()) (7 () ())))
+;; TRACE t10839: | (sicp.ch2.s3/copy-to-list (5 (3 () ()) (7 () ())) ())
+;; TRACE t10840: | | (sicp.ch2.s3/copy-to-list (7 () ()) ())
+;; TRACE t10841: | | | (sicp.ch2.s3/copy-to-list () ())
+;; TRACE t10841: | | | => ()
+;; TRACE t10842: | | | (sicp.ch2.s3/mycons 7 ())
+;; TRACE t10842: | | | => (7)
+;; TRACE t10843: | | | (sicp.ch2.s3/copy-to-list () (7))
+;; TRACE t10843: | | | => (7)
+;; TRACE t10840: | | => (7)
+;; TRACE t10844: | | (sicp.ch2.s3/mycons 5 (7))
+;; TRACE t10844: | | => (5 7)
+;; TRACE t10845: | | (sicp.ch2.s3/copy-to-list (3 () ()) (5 7))
+;; TRACE t10846: | | | (sicp.ch2.s3/copy-to-list () (5 7))
+;; TRACE t10846: | | | => (5 7)
+;; TRACE t10847: | | | (sicp.ch2.s3/mycons 3 (5 7))
+;; TRACE t10847: | | | => (3 5 7)
+;; TRACE t10848: | | | (sicp.ch2.s3/copy-to-list () (3 5 7))
+;; TRACE t10848: | | | => (3 5 7)
+;; TRACE t10845: | | => (3 5 7)
+;; TRACE t10839: | => (3 5 7)
+;; TRACE t10838: => (3 5 7)
+;; (3 5 7)
+
+
+
+
+
+
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.64
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defn partial-tree [elts n]
+  (if (= n 0)
+    (cons '() elts)
+    (let [left-size (quot (dec n) 2)
+          left-result (partial-tree elts left-size)
+          left-tree (first left-result)
+          non-left-elts (next left-result)
+          right-size (- n (inc left-size))
+          this-entry (first non-left-elts)
+          right-result (partial-tree (next non-left-elts) right-size)
+          right-tree (first right-result)
+          remaing-elts (next right-result)]
+      (cons (make-tree this-entry left-tree right-tree)
+            remaing-elts))))
+
+(defn list->tree [elems]
+  (first (partial-tree elems (count elems))))
+
+
+
