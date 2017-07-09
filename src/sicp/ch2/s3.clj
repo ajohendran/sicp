@@ -916,14 +916,14 @@
 
 ;; For instance
 ;; abbreviating tree->list-2 as ttl2, copy-to-list as ctl
-;; (ttl2 (5 (3 () ()) (7 () ()))))
-;; (ctl (5 (3 () ()) (7 () ())))
-;; (ctl 3 (cons 5 (ctl 7 nil)))
-;; (ctl 3 (cons 5 (ctl nil (cons 7 (ctl nil nil)))))
-;; (ctl 3 (cons 5 (ctl nil (cons 7 nil))))
-;; (ctl 3 (cons 5 (ctl nil (7))))
-;; (ctl 3 (cons 5 (7)))
-;; (ctl 3 (5 7))
+;; (ttl2 (5 (3 nil nil) (7 nil nil))))
+;; (ctl (5 (3 nil nil) (7 nil nil)))
+;; (ctl (3 nil nil) (cons 5 (ctl (7 nil nil) nil)))
+;; (ctl (3 nil nil) (cons 5 (ctl nil (cons 7 (ctl nil nil)))))
+;; (ctl (3 nil nil) (cons 5 (ctl nil (cons 7 nil))))
+;; (ctl (3 nil nil) (cons 5 (ctl nil (7))))
+;; (ctl (3 nil nil) (cons 5 (7)))
+;; (ctl (3 nil nil) (5 7))
 ;; (ctl nil (cons 3 (ctl nil (5 7))))
 ;; (ctl nil (cons 3 (5 7)))
 ;; (ctl nil (3 5 7))
