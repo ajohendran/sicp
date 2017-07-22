@@ -907,11 +907,8 @@
 
 ;;;; b ;;;;
 
-;; tree->list-1 grows more slowly.
-
 ;; tree->list-2 grows linearly in terms of number of steps.
-;; For every element, there are 3 steps
-;; If the element has a child, 3 more steps are added
+;; For every element, there are 3 extra steps
 ;; For n elements, there are (3n+2) total method calls
 
 ;; For instance
@@ -927,7 +924,7 @@
 ;; (ctl nil (cons 3 (ctl nil (5 7))))
 ;; (ctl nil (cons 3 (5 7)))
 ;; (ctl nil (3 5 7))
-;; ==> ( 3 5 7)
+;; ==> (3 5 7)
 
 
 ;; sicp.ch2.s3> (tree->list-2 (list->tree [3 5 7]))
@@ -957,7 +954,229 @@
 
 
 
+;; tree->list-1 has O(n*logn) growth.
+;; tree->list-1 is harder to analyze since growth is not linear with number
+;; of elements and growth depends on the structure of tree as well.
+;; The number of append operations and the size of list being appended have a 
+;; significant influence on the rate of growth and append related operations
+;; eclipse the other steps. The number of append related operations depend
+;; on how the tree is structured (is it balanced?, are all leaf positions filled?)
 
+;; Since when alalyzing complexity, we look at worst case scenario
+;; analysis will be done for a completely balanced tree with all leaf nodes filled.
+;; That means we will look at trees with sizes of 1, 3, 7, 15 and so on.
+;; These trees have sizes connected to powers of two. That is, 2^1-1 , 2^2-1, 2^3-1
+;; and so on
+
+;; Note that append is a 2n+1 operation!
+
+;; Abbreviating tree->list-1 as ttl1, append as 'a'
+;; (ttl1 (5 () ())) ;; one step to expand
+;; (a (ttl1 ()) (cons 5 (ttl1 ()))) ;; eval left branch
+;; (a () (cons 5 (ttl1 ()))) ;; eval right branch
+;; (a () (cons 5 ())) ;; cons step
+;; (a () (5)) ;; append step
+;; (5)
+;; So total of 5 steps
+
+;; (ttl1 (5 (3 () ()) (7 () ())))
+;; (a (ttl (3 () ())) (cons 5 (ttl (7 () ()))))
+;; from earlier example, (ttl (3 () ()) is 5 steps
+;; (a (3) (cons 5 (ttl (7 () ()))))
+;; Similarly, (ttl (7 () ())) will be 5 steps
+;; (a (3) (cons 5 (7)))
+;; (a (3) (5 7))
+;; Since append is 2n+1 operation, this is 3 steps
+;; (3 5 7)
+;; total of 15 steps
+
+;; The general pattern is the number of steps will be the
+;; expansion step + number of steps in branches + cons step + append steps
+
+;; It will be easier to separate out the analysis for append operations from total
+;; number of steps. If append steps are ignored, tree->list-1 is linear (similar to
+;; tree->list-2).
+;; Expansion step + cons step + left branch steps + right branch steps
+;; If either branch is empty, that is one step, otherwise 4 steps each.
+;; 3 extra steps for each element
+;; Total steps, ignoring append, is 3n+1.
+
+;; For a fully balanced and filled tree of n elements, the last append step
+;; consists of appending (n-1)/2 elements.
+;; Prior to that, recursively proceeding backwards,
+;; there will be 2 append calls with (((n-1)/2)-1)/2 elements
+;; because there are two branches with (n-1)/2 elements in each branch
+
+;; Since, as noted before, the number of elemengts in a aa fully balanced tree
+;; with all leaf nodes filled will be in steps of 2^m-1, where m = 1,2,3,....
+
+;; Let n = 2^m-1
+;; m = log(n+1)
+;; Let append[x] stand for no. of steps in appending x elements
+
+;; No. of append operations in last level = 2^0 * ap[(n-1)/2]
+;;  = 2^0 * append[((2^m-1)-1)/2]
+;;  = 2^0 * append[(2^m-2)/2)]
+;;  = 2^0 * append[2^(m-1)-1]
+
+;; No. of append operations in 2nd last level = 2^1 * append[(2^(m-1)-1)/2]
+;; = 2^1 * append[2^(m-2)-1]
+
+;; No. of append operations in 3rd last level = 2^2 * append[2^(m-3)-1]
+
+;; We know that we append zero elements in the first level
+;; Contnuing the above laid out process,
+;; No. of append operations in first level = 2^(m-1) * append[2^(m-m)-1]
+
+;; Total no of append operations
+;; = 2^0 *  append[2^(m-1)-1] +
+;;   2^1 *  append[2^(m-2)-1] +
+;;   2^2 *  append[2^(m-3)-1] +
+;;   ------------------------
+;;   ------------------------ +
+;;   2^(m-1) *  append[2^(m-m)-1]
+
+
+;; Since append is 2z+1 operation for z elements,
+;; No of steps related to append
+;; = 2^0 *  (2 * [2^(m-1)-1] +1) +
+;;   2^1 *  (2 * [2^(m-2)-1] +1) +
+;;   2^2 *  (2 * [2^(m-3)-1] +1) +
+;;   ------------------------
+;;   ------------------------ +
+;;   2^(m-1) * 2 * [2^(m-m)-1] + 1
+
+
+;; No of steps related to append
+;; = 2^0 * (2^m-1) +
+;;   2^1 * (2^(m-1)-1) +
+;;   2^2 * (2^(m-2)-1) +
+;;   ------------
+;;   ------------  +
+;;  2^(m-1) * (2^1-1)
+
+
+;; No of steps related to append
+;; = 2^m - 2^0 +
+;;   2^m - 2^1 +
+;;   2^m - 2^2 +
+;;   ---------
+;;   --------- +
+;;   2^m - 2^(m-1)
+
+
+;; No of steps related to append
+;; = m*2^m - [2^0 + 2^1 + 2^2 + ....... + 2^(m-1)]
+;; = m*2^m - [2^(m-1+1)-1]
+;; = m*2^m - [2^m-1] 
+;; = log(n+1) * (n+1) - [n+1 - 1]
+;; = [log(n+1) * (n+1)] - n
+
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;; So total no. of steps = (3n + 1) +  [log(n+1) * (n+1)] - n
+;; = (2n + 1) + log(n+1) * (n+1)
+;; For large values of n, log(n+1) * (n+1) will dominate.
+;; This is a n*log(n) complexity operation.
+;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+
+
+
+;; sicp.ch2.s3> (tree->list-1 bt6)
+;; TRACE t10996: (sicp.ch2.s3/tree->list-1 (5 (3 (2 () ()) (4 () ())) (7 (6 () ()) (8 () ()))))
+;; TRACE t10997: | (sicp.ch2.s3/tree->list-1 (3 (2 () ()) (4 () ())))
+;; TRACE t10998: | | (sicp.ch2.s3/tree->list-1 (2 () ()))
+;; TRACE t10999: | | | (sicp.ch2.s3/tree->list-1 ())
+;; TRACE t10999: | | | => ()
+;; TRACE t11000: | | | (sicp.ch2.s3/tree->list-1 ())
+;; TRACE t11000: | | | => ()
+;; TRACE t11001: | | | (sicp.ch2.s3/mycons 2 ())
+;; TRACE t11001: | | | => (2)
+;; TRACE t11002: | | | (sicp.ch2.s3/append () (2))
+;; TRACE t11002: | | | => (2)
+;; TRACE t10998: | | => (2)
+;; TRACE t11003: | | (sicp.ch2.s3/tree->list-1 (4 () ()))
+;; TRACE t11004: | | | (sicp.ch2.s3/tree->list-1 ())
+;; TRACE t11004: | | | => ()
+;; TRACE t11005: | | | (sicp.ch2.s3/tree->list-1 ())
+;; TRACE t11005: | | | => ()
+;; TRACE t11006: | | | (sicp.ch2.s3/mycons 4 ())
+;; TRACE t11006: | | | => (4)
+;; TRACE t11007: | | | (sicp.ch2.s3/append () (4))
+;; TRACE t11007: | | | => (4)
+;; TRACE t11003: | | => (4)
+;; TRACE t11008: | | (sicp.ch2.s3/mycons 3 (4))
+;; TRACE t11008: | | => (3 4)
+;; TRACE t11009: | | (sicp.ch2.s3/append (2) (3 4))
+;; TRACE t11010: | | | (sicp.ch2.s3/append nil (3 4))
+;; TRACE t11010: | | | => (3 4)
+;; TRACE t11011: | | | (sicp.ch2.s3/mycons 2 (3 4))
+;; TRACE t11011: | | | => (2 3 4)
+;; TRACE t11009: | | => (2 3 4)
+;; TRACE t10997: | => (2 3 4)
+;; TRACE t11012: | (sicp.ch2.s3/tree->list-1 (7 (6 () ()) (8 () ())))
+;; TRACE t11013: | | (sicp.ch2.s3/tree->list-1 (6 () ()))
+;; TRACE t11014: | | | (sicp.ch2.s3/tree->list-1 ())
+;; TRACE t11014: | | | => ()
+;; TRACE t11015: | | | (sicp.ch2.s3/tree->list-1 ())
+;; TRACE t11015: | | | => ()
+;; TRACE t11016: | | | (sicp.ch2.s3/mycons 6 ())
+;; TRACE t11016: | | | => (6)
+;; TRACE t11017: | | | (sicp.ch2.s3/append () (6))
+;; TRACE t11017: | | | => (6)
+;; TRACE t11013: | | => (6)
+;; TRACE t11018: | | (sicp.ch2.s3/tree->list-1 (8 () ()))
+;; TRACE t11019: | | | (sicp.ch2.s3/tree->list-1 ())
+;; TRACE t11019: | | | => ()
+;; TRACE t11020: | | | (sicp.ch2.s3/tree->list-1 ())
+;; TRACE t11020: | | | => ()
+;; TRACE t11021: | | | (sicp.ch2.s3/mycons 8 ())
+;; TRACE t11021: | | | => (8)
+;; TRACE t11022: | | | (sicp.ch2.s3/append () (8))
+;; TRACE t11022: | | | => (8)
+;; TRACE t11018: | | => (8)
+;; TRACE t11023: | | (sicp.ch2.s3/mycons 7 (8))
+;; TRACE t11023: | | => (7 8)
+;; TRACE t11024: | | (sicp.ch2.s3/append (6) (7 8))
+;; TRACE t11025: | | | (sicp.ch2.s3/append nil (7 8))
+;; TRACE t11025: | | | => (7 8)
+;; TRACE t11026: | | | (sicp.ch2.s3/mycons 6 (7 8))
+;; TRACE t11026: | | | => (6 7 8)
+;; TRACE t11024: | | => (6 7 8)
+;; TRACE t11012: | => (6 7 8)
+;; TRACE t11027: | (sicp.ch2.s3/mycons 5 (6 7 8))
+;; TRACE t11027: | => (5 6 7 8)
+;; TRACE t11028: | (sicp.ch2.s3/append (2 3 4) (5 6 7 8))
+;; TRACE t11029: | | (sicp.ch2.s3/append (3 4) (5 6 7 8))
+;; TRACE t11030: | | | (sicp.ch2.s3/append (4) (5 6 7 8))
+;; TRACE t11031: | | | | (sicp.ch2.s3/append nil (5 6 7 8))
+;; TRACE t11031: | | | | => (5 6 7 8)
+;; TRACE t11032: | | | | (sicp.ch2.s3/mycons 4 (5 6 7 8))
+;; TRACE t11032: | | | | => (4 5 6 7 8)
+;; TRACE t11030: | | | => (4 5 6 7 8)
+;; TRACE t11033: | | | (sicp.ch2.s3/mycons 3 (4 5 6 7 8))
+;; TRACE t11033: | | | => (3 4 5 6 7 8)
+;; TRACE t11029: | | => (3 4 5 6 7 8)
+;; TRACE t11034: | | (sicp.ch2.s3/mycons 2 (3 4 5 6 7 8))
+;; TRACE t11034: | | => (2 3 4 5 6 7 8)
+;; TRACE t11028: | => (2 3 4 5 6 7 8)
+;; TRACE t10996: => (2 3 4 5 6 7 8)
+;; (2 3 4 5 6 7 8)
+
+
+;; if n=3, steps = 7 + log4 * 4 = 15. This checks out as seen from
+;; substitution model steps expanded above for tree (5 (3 () ()) (7 () ()))
+
+;; if n=7, steps = 15 + log8 * 8 = 39. This checks out as seen from trace above
+;; for tree (5 (3 (2 () ()) (4 () ())) (7 (6 () ()) (8 () ())))
+
+;; if n=15, steps = 31 + log16 * 16 = 31 + 64 = 95. This checks out because
+;; no of steps generally is 2 + 2 * [steps for (n-1)/2] + append[(n-1)/2]
+;; = 2 + 2* 39 + append [7]
+;; = 2 + 78 + 15
+;; = 95
 
 
 
