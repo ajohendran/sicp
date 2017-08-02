@@ -1,4 +1,5 @@
 
+
 (ns sicp.ch2.s3)
 
 
@@ -841,12 +842,12 @@
 
 ;;(defn append [l1 l2] (concat l1 l2))
 
+(defn mycons [e l] (cons e l))
+
 (defn append [l1 l2]
   (if (empty? l1)
     l2
     (mycons (first l1) (append (next l1) l2))))
-
-(defn mycons [e l] (cons e l))
 
 (defn tree->list-1 [tree]
   (if (empty? tree) '()
@@ -1072,6 +1073,7 @@
 ;; = log(n+1) * (n+1) - [n+1 - 1]
 ;; = [log(n+1) * (n+1)] - n
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; So total no. of steps = (3n + 1) +  [log(n+1) * (n+1)] - n
 ;; = (2n + 1) + log(n+1) * (n+1)
@@ -1189,7 +1191,6 @@
 ;;;;  Ex 2.64
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
 (defn partial-tree [elts n]
   (if (= n 0)
     (cons '() elts)
@@ -1207,6 +1208,83 @@
 
 (defn list->tree [elems]
   (first (partial-tree elems (count elems))))
+
+
+
+;;;; a ;;;;
+
+;; This is a recursive algorithm that breaks the given list into roughly equal sized
+;; parts and calls itself with the separate parts as inputs. The result from first
+;; part of size (qout (/ (dec n 2)) will form the left branch and the result from
+;; second part of size (- n (inc left-size0) will make right-branch. Parent will
+;; the element in the middle obtained as first element after the left branch is
+;; processed. An importan thing to notice about the algorithm is that the input
+;; list is traversed only once -- a clever trick that utilizes the nature of
+;; list datastructure and processes left subtrees first.
+ 
+;; Tree for (1 3 5 7 9 11)
+;;                5
+;;           3         9
+;;        1         7    11
+
+
+
+;;;; b ;;;;
+
+;; Order of growth in the number of steps is O(n)
+
+;; Let the number of elements in input list to partial-tree procedure be n
+;; and let
+;; n = 2^m-1
+;; ls = (quot (/ (dec) 2))
+;; rs = (-n (inc ls)) 
+;; Notice that, regrdless of whether n is even or odd, ls+rs will always be n-1
+
+;; Let the following be the values for input argument 'n' at each recursive level
+;; So, b will be left-size when n=a, c will be right-size
+;; d will be left-size when n=b, g will be rightsize when n=c and so on
+;;                a
+;;           b         c
+;;         d   e     f   g
+;;        h i j k   l m n o
+
+;; Sums of values of input parameter 'n' at each recurisve level
+;; a                            = a-0   = a+1 - 2^0
+;; b+c                          = a-1   = a+1 - 2^1
+;; d+e+f+g= b-1 + c -1          = a-3   = a+1 - 2^2
+;; h+i+j+k+l+m+n+o = d+e+f+g-4  = a-7   = a+1 - 2^3
+;; and so on
+
+;; We are interested in the sum of the values of 'n' at each level
+;; in order to determine how many levels deep recursive calls will be made.
+;; Recursion stops when the value for 'n' is 0.
+
+;; Let x be the number of steps performed with each call to partial-tree
+;; Since the procedure recursively calls itself twice each time,
+
+;; Recursion level | Times partial-tree called | Total value of n across level
+;;           1     |          2^0              |      n === 2^m-2^0
+;;           2     |          2^1              |    n-1 === 2^m-2^1
+;;           3     |          2^2              |            2^m-2^2
+;;           4     |          2^3              |            2^m-2^3
+;; -----------------------------------------------------------------
+;; -----------------------------------------------------------------
+;;           m     |         2^m-1             |            2^m-2^(m-1)
+;;          m+1    |         2^m               |            2^m-2^m 
+
+;; Since recursion stops when total value of n across a level is 0,
+;; and number of steps is 1 when argument value n=0 and x otherwise, 
+
+;; Total number of steps = x * [2^0 + 2^1 + 2^2 + 2^3 + ..... + 2^(m-1)]+ 2^m
+;;     =  x * [2^m-1] + 2^m
+;;     = (x * n) + (n + 1)
+
+;; So, including the first call to list->tree, total steps will be
+;; n(x+1) + 2
+;; This is linear in n, where x is number of fixed steps per call to partial-tree.
+
+
+
 
 
 
