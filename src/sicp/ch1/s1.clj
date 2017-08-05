@@ -6,11 +6,75 @@
 ;;; 1.1 The Elements of Programming
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn square [x]
+  (* x x))
+
+(defn sum-of-squares [x y]
+  (+ (square x) (square y)))
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 1.3
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; several ways to do this
+
+(defn sum-squares-largest-2 [a b c]
+  (if (> a b)
+    (if (> b c)
+      (sum-of-squares a b)
+      (sum-of-squares a c))
+    (if (> a c)
+      (sum-of-squares a b)
+      (sum-of-squares b c))))
+
+(defn sum-squares-largest-2 [a b c]
+  (if (> a b)
+    (sum-of-squares a (if (> b c) b c))
+    (sum-of-squares b (if (> a c) a c))))
+
+(defn sum-squares-largest-2 [a b c]
+  (if (> a b)
+    (sum-of-squares a (max b c))
+    (sum-of-squares b (max a c))))
+
+;; Really clever version from http://community.schemewiki.org/?sicp-ex-1.3
+(defn sum-squares-largest-2 [a b c]
+  (sum-of-squares (max a b) (max (min a b) c)))
+
+;; (defn permutations [s]
+;;   (if (empty? s)
+;;     '(())
+;;     (mapcat (fn [x]
+;;               (map (fn [p] (cons x p))
+;;                    (permutations (remove #{x} s))))
+;;             s)))
+;; sicp.ch1.s1> (map #(apply sum-squares-largest-2 %) (permutations [1 2 3]))
+;; (13 13 13 13 13 13)
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ex 1.4
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (a-plus-abs-b a b)
+  ((if (> b 0) + -) a b))
+
+;; The expression (if (> b 0) + -) is evaluated to determine the operator
+;; which is the value of either + or - symbol.
+
+
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 1.5
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 
 (defn p [] (p))
 
@@ -25,10 +89,11 @@
 
 
 
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Code for Ex 1.6 and 1.7
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 
 (defn square [x]
   (* x x))
@@ -50,11 +115,11 @@
 
 
 
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 1.6
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
 
 ;; Question - what happens if new-if is used
 
@@ -70,6 +135,9 @@
 
 
 ;; Answer - we fall into infinite loop because new-if, as a function, will have to evaluate its arguments 
+
+
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -98,6 +166,8 @@
   (if (new-good-enough? guess old-guess)
     guess
     (new-sqrt-iter (improve guess x) guess x)))
+
+
 
 
 
