@@ -621,7 +621,7 @@
 (defn make-set []
   '())
 
-;; avoiding using the symbol 'set' as parameter because it is a clojrue keyword
+;; avoiding using the symbol 'set' as parameter because it is a clojure keyword
 (defn element-of-set? [x coll]
   (cond (empty? coll) false
         (= x (first coll)) true
@@ -681,7 +681,7 @@
 
 ;;element-of-set? does not change
 
-;; adjoin-set will just be a cons because we do no have to check for membeship
+;; adjoin-set will just be a cons because we do not have to check for membeship
 (def adjoin-set cons)
 
 ;; union-set will simply be O(n) operation, same as append
@@ -690,7 +690,7 @@
 ;; insersection-set is more interesting
 ;; we also have to keep track of how many times an element occurs in each set
 
-;; The following is not correct
+;; The following outputs are not correct
 ;; sicp.ch2.s3> (intersection-set '(4 3) '(5 3 6 7 3) )
 ;; (3)
 ;; sicp.ch2.s3> (intersection-set '(5 3 6 7 3) '(4 3) )
@@ -707,7 +707,7 @@
     coll
     (let [result (move-to-front e (next coll))]
       (if (= e (first result))
-        (cons (first result) (cons (first coll) (next result)))
+        (cons e (cons (first coll) (next result)))
         (cons (first coll) result)))))
 
 (defn intersection-set [set1 set2]
@@ -720,8 +720,6 @@
 
 ;; sicp.ch2.s3> (intersection-set '(5 3 6 7 3) '(4 3) )
 ;; (3)
-;; sicp.ch2.s3> (intersection-set '(5 3 6 7 3) '(4 3) )
-;; (3
 ;; sicp.ch2.s3> (intersection-set '(5 3 6 7 3 5 5) '(4 3 3 3 5 5) )
 ;; (5 3 3 5)
 
@@ -761,7 +759,7 @@
         (< e (first set1)) false
         :else (element-of-set? e (next set1))))
 
-(defn insersection-set [set1 set2]
+(defn intersection-set [set1 set2]
   (if (or (empty? set1) (empty? set2))
     '()
     (let [x1 (first set1)
@@ -1184,9 +1182,6 @@
 
 
 
-
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Ex 2.64
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1287,4 +1282,59 @@
 
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.65
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn intersection-set-ordered [set1 set2]
+  (if (or (empty? set1) (empty? set2))
+    '()
+    (let [x1 (first set1)
+          x2 (first set2)]
+      (cond 
+      (= x1 x2)  (cons x1 (intersection-set-ordered (next set1) (next set2)))
+      (< x1 x2)  (intersection-set-ordered (next set1) set2)
+      :else (intersection-set-ordered set1 (next set2))))))
+
+(defn union-set-ordered [set1 set2]
+  (cond (empty? set1) set2
+        (empty? set2) set1
+        :else (let [x1 (first set1)
+                    x2 (first set2)]
+                (cond 
+                  (= x1 x2) (cons x1 (union-set-ordered (next set1) (next set2)))
+                  (< x1 x2) (cons x1 (union-set-ordered (next set1) set2))
+                  :else (cons x2 (union-set-ordered set1 (next set2)))))))
+
+(defn union-set [s1 s2]
+  (list->tree (union-set-ordered (tree->list-2 s1)
+                                 (tree->list-2 s2))))
+
+(defn intersection-set [s1 s2]
+  (list->tree (intersection-set-ordered (tree->list-2 s1)
+                                        (tree->list-2 s2))))
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.66
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn lookup [given-key set-of-records]
+  (if (empty? set-of-records)
+    false
+    (let [current-key (key-record (entry set-of-records))]
+    (cond (= given-key current-key) (entry set-of-records)
+          (< given-key current-key) (lookup given-key (left-branch set-of-records))
+          :else (lookup given-key (right-branch set-of-records))))))
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Huffman Encoding Trees
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
