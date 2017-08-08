@@ -1322,13 +1322,13 @@
 ;;;;  Ex 2.66
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn lookup [given-key set-of-records]
-  (if (empty? set-of-records)
-    false
-    (let [current-key (key-record (entry set-of-records))]
-    (cond (= given-key current-key) (entry set-of-records)
-          (< given-key current-key) (lookup given-key (left-branch set-of-records))
-          :else (lookup given-key (right-branch set-of-records))))))
+;; (defn lookup [given-key set-of-records]
+;;   (if (empty? set-of-records)
+;;     false
+;;     (let [current-key (key-record (entry set-of-records))]
+;;     (cond (= given-key current-key) (entry set-of-records)
+;;           (< given-key current-key) (lookup given-key (left-branch set-of-records))
+;;           :else (lookup given-key (right-branch set-of-records))))))
 
 
 
@@ -1337,4 +1337,173 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Huffman Encoding Trees
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;; leaf representation
+(defn make-leaf [smbl weight]
+  (list 'leaf smbl weight))
+
+(defn leaf? [obj]
+  (= (first obj) 'leaf))
+
+(defn symbol-leaf [x]
+  (fnext x))
+
+(defn weight-leaf [x]
+  (first (nnext x)))
+
+;;;; code tree representation
+(defn left-branch [tree]
+  (first tree))
+
+(defn right-branch [tree]
+  (fnext tree))
+
+(defn symbols-tree [tree]
+  (if (leaf? tree)
+    (list (symbol-leaf tree))
+    (first (nnext tree))))
+
+(defn weight-tree [tree]
+  (if (leaf? tree)
+    (weight-leaf tree)
+    (first (nthnext tree 3))))
+
+(defn make-code-tree [left right]
+  (list left
+        right
+        (concat (symbols-tree left) (symbols-tree right))
+        (+ (weight-tree left) (weight-tree right))))
+
+;; decode procedures
+(defn choose-branch [bit branch]
+  (cond (= bit 0) (left-branch branch)
+        (= bit 1) (right-branch branch)
+        :else (throw (Exception. (str "bad bit -- CHOOSE-BRANCH " bit)))))
+
+(defn decode
+  ([bits tree]
+   (decode bits tree tree))
+  ([bits current-branch tree]
+   (if (empty? bits)
+     '()
+     (let [next-branch (choose-branch (first bits) current-branch)]
+       (if (leaf? next-branch)
+         (cons (symbol-leaf next-branch)
+               (decode (next bits) tree tree))
+         (decode (next bits) next-branch tree))))))
+
+;; tree creation procedures
+(defn adjoin-set [x s]
+  (cond (empty? s) (list x)
+        (< (weight-tree x) (weight-tree (first s))) (cons x s) ;; using <= operator
+        :else (cons (first s)
+                    (adjoin-set x (next s)))))
+
+(defn make-leaf-set [pairs]
+  (if (empty? pairs)
+    '()
+    (let [pair (first pairs)]
+      (adjoin-set (make-leaf (first pair)    ; symbol
+                             (second pair))   ; frequency
+                  (make-leaf-set (next pairs))))))
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.67
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def sample-tree (make-code-tree (make-leaf 'A 4)
+                                 (make-code-tree
+                                  (make-leaf 'B 2)
+                                  (make-code-tree (make-leaf 'D 1)
+                                                  (make-leaf 'C 1)))))
+
+(def sample-message '(0 1 1 0 0 1 0 1 0 1 1 1 0))
+
+;; (decode sample-message sample-tree)
+;; => (A D A B B C A)
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.68
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn encode-symbol [smbl tree]
+  (cond (leaf? tree)
+        (if (= smbl (symbol-leaf tree))
+          '()
+          (throw (Exception. (str "Symbol not found in tree -- " smbl))))
+        (memq smbl (symbols-tree (left-branch tree)))
+        (cons 0 (encode-symbol smbl (left-branch tree)))
+        :else
+        (cons 1 (encode-symbol smbl (right-branch tree)))))
+
+(defn encode [msg tree]
+  (if (empty? msg)
+    '()
+    (concat (encode-symbol (first msg) tree)
+            (encode (next msg) tree))))
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.69
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; redefining adjoin-set using <= operator
+(defn adjoin-set [x s]
+  (cond (empty? s) (list x)
+        (<= (weight-tree x) (weight-tree (first s))) (cons x s) 
+        :else (cons (first s)
+                    (adjoin-set x (next s)))))
+
+(defn successive-merge [leaves]
+  (cond (empty? leaves) '()
+        (empty? (next leaves)) (first leaves)
+        :else (successive-merge (adjoin-set (make-code-tree (first leaves)
+                                                            (second leaves))
+                                            (nnext leaves)))))
+
+(defn generate-huffman-tree [pairs]
+  (successive-merge (make-leaf-set pairs)))
+
+
+;; (generate-huffman-tree '((A 8) (B 3) (C 1) (D 1) (E 1) (F 1) (G 1) (H 1)))
+;; => ((leaf A 8) ((((leaf G 1) (leaf H 1) (G H) 2) ((leaf E 1) (leaf F 1) (E F) 2) (G H E F) 4) (((leaf C 1) (leaf D 1) (C D) 2) (leaf B 3) (C D B) 5) (G H E F C D B) 9) (A G H E F C D B) 17)
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.70
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def lyrics-tree
+  (generate-huffman-tree
+   '((a 2) (boom 1) (Get 2) (job 2) (na 16) (Sha 3) (yip 9) (Wah 1))))
+
+;; lyrics-tree
+;; => ((leaf na 16) ((leaf yip 9) ((((leaf boom 1) (leaf Wah 1) (boom Wah) 2) (leaf a 2) (boom Wah a) 4) ((leaf Sha 3) ((leaf Get 2) (leaf job 2) (Get job) 4) (Sha Get job) 7) (boom Wah a Sha Get job) 11) (yip boom Wah a Sha Get job) 20) (na yip boom Wah a Sha Get job) 36)
+
+(def lyrics-msg '(Get a job Sha na na na na na na na na Get a job Sha na na na na na na na na Wah yip yip yip yip yip yip yip yip yip Sha boom))
+
+;; lyrics-msg
+;; => (Get a job Sha na na na na na na na na Get a job Sha na na na na na na na na Wah yip yip yip yip yip yip yip yip yip Sha boom)
+
+;; (encode lyrics-msg lyrics-tree)
+
+;; => (1 1 1 1 0 1 1 0 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 1 1 1 1 0 1 1 0 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 1 1 0 0 1 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 1 1 0 1 1 0 0 0)
+
+;; 84 bits needed for encoding
+;; For fixed length encoding, we need (log2 8) bits since we have 8 unique symbols
+;; There are 36 symbols in the mesage
+;; 3 bits per symbol makes 108 bits
+
 
