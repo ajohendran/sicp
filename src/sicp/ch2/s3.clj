@@ -1219,8 +1219,10 @@
  
 ;; Tree for (1 3 5 7 9 11)
 ;;                5
-;;           3         9
-;;        1         7    11
+;;             /    \
+;;            3      9
+;;           /      /  \
+;;         1       7   11
 
 
 
@@ -1239,9 +1241,12 @@
 ;; So, b will be left-size when n=a, c will be right-size
 ;; d will be left-size when n=b, g will be rightsize when n=c and so on
 ;;                a
-;;           b         c
-;;         d   e     f   g
-;;        h i j k   l m n o
+;;             /     \
+;;            b       c
+;;          /  \     / \
+;;         d    e    f   g
+;;        /\   /\   /\   /\
+;;       h  i j k  l  m n  o
 
 ;; Sums of values of input parameter 'n' at each recurisve level
 ;; a                            = a-0   = a+1 - 2^0
@@ -1505,5 +1510,76 @@
 ;; For fixed length encoding, we need (log2 8) bits since we have 8 unique symbols
 ;; There are 36 symbols in the mesage
 ;; 3 bits per symbol makes 108 bits
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.71
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; This is quite straightforward.
+;; 2^0 + 2^1 + 2^2 + 2^3 + ..... + 2^(n-1) = 2^n - 1
+;; So the sum of two smallest weights will ALWAYS be less than the next big weight.
+;; Bits required to encode most frequent symbol will be 1.
+;; Bits required to encode least frequent symbol will be n-1.
+
+
+;; Let a , b, c , d, e be 5 elements with frequency 1, 2, 4, 8, 16 respectively.
+;;
+;;                   [e d c b a](31) 
+;;                     /      \
+;;                    /        \
+;;                   /          \
+;;                 e(16)    [d c b a](15)
+;;                           /     \
+;;                          /       \
+;;                         /         \
+;;                       d(8)      [c b a](7)
+;;                                 /    \
+;;                                /      \
+;;                               /        \
+;;                             c(4)    [b a](3)
+;;                                     /     \
+;;                                    /       \
+;;                                   /         \
+;;                                 a(1)        b(2)
+
+
+;; Skipping 10 element tree (it is just more of the same as 5 element tree)
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.72
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; (defn encode-symbol [smbl tree]
+;;   (cond (leaf? tree)
+;;         (if (= smbl (symbol-leaf tree))
+;;           '()
+;;           (throw (Exception. (str "Symbol not found in tree -- " smbl))))
+;;         (memq smbl (symbols-tree (left-branch tree)))
+;;         (cons 0 (encode-symbol smbl (left-branch tree)))
+;;         :else
+;;         (cons 1 (encode-symbol smbl (right-branch tree)))))
+
+
+;; Number of steps needed to encode the most frequent symbol is constant, k.
+
+
+;; Order of growth for encoding least frequent symbol is either
+;; O(n), linear (if we always check left branch and it always has only one element)
+;; or O(n^2), polynomial (if we always check left branch and it has (n-m) elements)
+
+;; At every level, there are fixed number of steps for
+;; (i) Checking if leaf 
+;; (ii) checking the left branch (either 1 element or worst case, n elements)
+;; (iii) consing 1 to recursion call
+;; So this really depends on the number of levels,
+;; which depends on number of elements n
 
 
