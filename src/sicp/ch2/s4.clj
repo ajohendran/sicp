@@ -101,7 +101,7 @@
   (list type-tag contents))
 
 (defn type-tag [datum]
-  (if (list? datum)
+  (if (seq? datum)
     (first datum)
     (throw (Exception. (str "Bad tagged datum -- TYPE-TAG " datum)))))
 
@@ -252,7 +252,6 @@
 (defn get-proc [op type]
   (get-in @op-type-table [op type]))
 
-
 (defn install-rectangular-package []
   (letfn [;; internal-procedures
           (real-part [z] (first z))
@@ -351,3 +350,273 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;  Ex 2.73
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;; a ;;;;;
+
+;; deriv has been updated to use generic procedures. If a new operator type
+;; is to be added added to the system, all we have to do is install
+;; a new package wih the procedure to handle the derivation for new operator
+
+;; number? and same-variable? can't be assimilated because they
+;; do not have the 'operator & operand in list' structure used for generic dispatch
+
+;; if operator and operand procedures are updated with the conditionals,
+;; number? and variable? can be assimilated
+
+
+;;;;; b & c ;;;;;
+
+
+(def op-type-table (atom {}))
+
+(defn put-proc [op type proc]
+  (swap! op-type-table assoc-in [op type] proc))
+
+(defn get-proc [op type]
+  (get-in @op-type-table [op type]))
+
+
+(defn =number? [exp num]
+  (and (number? exp) (= exp num)))
+
+(def variable? symbol?)
+
+(defn same-variable? [v1 v2]
+  (and (variable? v1)
+       (variable? v2)
+       (= v1 v2)))
+
+(defn make-sum [a b]
+  (cond (=number? a 0) b
+        (=number? b 0) a
+        (and (number? a) (number? b)) (+ a b)
+        :else (list '+ a b)))
+
+(defn make-difference [a b]
+  (cond (=number? b 0) a
+        (and (number? a) (number? b)) (- a b)
+        :else (list '- a b)))
+
+(defn make-product [a b]
+  (cond (or (=number? a 0) (=number? b 0)) 0
+        (=number? a 1) b
+        (=number? b 1) a
+        (and (number? a) (number? b)) (* a b)
+        :else (list '* a b)))
+
+(defn make-exponentiation [a b]
+  (cond (=number? b 0) 1
+        (=number? a 0) 0
+        (=number? b 1) a
+        (=number? a 1) 1
+        (and (number? a) (number? b)) (Math/pow a b)
+        :else (list '** a b)))
+
+(defn operator [exp] (first exp))
+(defn operands [exp] (next exp))
+
+(defn deriv [exp var]
+  (cond (number? exp) 0
+        (variable? exp) (if (same-variable? exp var) 1 0)
+        :else ((get-proc 'deriv (operator exp)) (operands exp) var)))
+
+(defn install-deriv-add-mult []
+  (letfn [(deriv-sum [args var]
+            (let [addend (first args)
+                  augend (second args)]
+              (make-sum (deriv addend var) (deriv augend var))))
+          (deriv-product [args var]
+            (let [multiplier (first args)
+                  multiplicand (second args)]
+              (make-sum
+               (make-product multiplier (deriv multiplicand var))
+               (make-product multiplicand (deriv multiplier var)))))]
+    (put-proc 'deriv '+ deriv-sum)
+    (put-proc 'deriv '* deriv-product)))
+
+(defn install-deriv-exponentiation []
+  (letfn [(deriv-exponentiation [args var]
+            (let [base (first args)
+                  exponent (second args)]
+              (make-product
+               (make-product exponent
+                             (make-exponentiation base
+                                                  (make-difference exponent 1)))
+               (deriv base var))))]
+    (put-proc 'deriv '** deriv-exponentiation)))
+
+;; sicp.ch2.s4> (deriv '(** x y) 'x)
+;; (* y (** x (- y 1)))
+;; sicp.ch2.s4> (deriv '(+ (* (* (* 5 x) (** y x)) x) y) 'x)
+;; (+ (* (* 5 x) (** y x)) (* x (* (** y x) 5)))
+
+
+;;;;; d ;;;;;
+
+;; All that needs to be changed is the order of elements in calls to put-proc.
+;; For example: (put-proc 'deriv '+ deriv-sum) has to be changed to
+;; (put-proc '+ 'deriv deriv-sum)
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.74
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn attach-tag [type-tag contents]
+  (list type-tag contents))
+
+;; modified from book. Use 'NO-TYPE for when typw is not needed
+(defn type-tag [datum]
+  (if (seq? datum)
+    (first datum)
+    'NO-TYPE))
+
+;; modified from book. If datum isn't a list, just return it
+(defn contents [datum]
+  (if (seq? datum)
+    (second datum)
+    datum))
+
+(def op-type-table (atom {}))
+
+(defn put-proc [op type proc]
+  (swap! op-type-table assoc-in [op type] proc))
+
+(defn get-proc [op type]
+  (get-in @op-type-table [op type]))
+
+(defn apply-generic [op & args]
+  (let [tags (map type-tag args) 
+        proc (get-proc op tags)]
+     (if proc
+       (apply proc (map contents args))
+       (throw
+        (Exception.
+         (str "No method for these types -- APPLY-GENERIC ") (list op args))))))
+
+
+;;;;;;;;;; a ;;;;;;;;;;
+
+(defn get-record [name personnel-file]
+  (apply-generic 'get-record name personnel-file))
+
+;; Each personnel file should be tagged with corresponding division-id as tag
+;; (attach-tag 'div-1045 personnel-file)
+;; The division's accessors must be 'installed' to the operation-type table
+;; For example, (put-proc 'get-record '(NO_TYPE division-1045) get-emp-record)
+
+
+;;;;;;;;;; b ;;;;;;;;;;
+
+(defn get-salary [employee-record]
+  (apply-generic 'get-salary employee-record))
+
+;; Every record in each personnel file must be tagged with division-id as tag
+
+;; Since the division personnel file is tagged, we needn't really tag the individual
+;; records if we can always assume we will keep the tag asspciated with the
+;; personnel-file whenever we access a record from it and then something from the
+;; record. Or the generic get salary must take the personnel file as second argument
+
+
+;;;;;;;;;; c ;;;;;;;;;;
+
+(defn find-employee-record [name personnel-files]
+  (if (empty? personnel-files)
+    (println "Employee not found -- " name)
+    (let [rec (get-record name (first personnel-files))]
+      (if (nil? rec)
+        (find-employee-record name (next personnel-files))
+        rec))))
+
+
+;;;;;;;;;; d ;;;;;;;;;;
+
+;; Every record in the file and the file itself must be tagged with division-id
+;; All the accessor methods must be 'installed' in the generic procedure table
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Message Passing
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn make-from-real-imag [x y]
+  (let [dispatch (fn [op]
+                   (cond (= op 'real-part) x
+                         (= op 'imag-part) y
+                         (= op 'magnitude) (Math/sqrt (+ (square x) (square y)))
+                         (= op 'angle) (Math/atan2 y x)
+                         :else (throw
+                                (Exception.
+                                 (str"Unknown op -- MAKE-FROM-REAL-IMAG " op)))))]
+    dispatch))
+
+
+(defn apply-generic [op arg]
+  (arg op))
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.75
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn make-from-mag-ang [r a]
+  (let [dispatch (fn [op]
+                   (cond (= op 'magnitude) r
+                         (= op 'angle) a
+                         (= op 'real-part) (* r (Math/cos a))
+                         (= op 'imag-part) (* r (Math/sin a))
+                         :else (throw
+                                (Exception.
+                                 (str"Unknown op -- MAKE-FROM-MAG-ANG " op)))))]
+    dispatch))
+
+;; sicp.ch2.s4> (def z2 (make-from-mag-ang 25 (/ Math/PI 4)))
+;; #'sicp.ch2.s4/z2
+;; sicp.ch2.s4> (z2 'magnitude)
+;; 25
+;; sicp.ch2.s4> (z2 'angle)
+;; 0.7853981633974483
+;; sicp.ch2.s4> (z2 'real-part)
+;; 17.67766952966369
+;; sicp.ch2.s4> (z2 'imag-part)
+;; 17.677669529663685
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.76
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; explicit dispatch
+;; => new types      -- all generic methods must add a clause to the cond statement
+;;                      for each type and include code specific to the various types
+;; => new operations -- each new generic method should add cond clauses for every
+;;                      existing type
+
+
+
+;; data-directed style
+;;=> new types       -- 
+;;=> new operations  -- 
+
+
+;; message-passing-style
+;;=> new types added -- 
+;;=> new operations added -- 
+
+
+
+;; System where new types often added
+;; System where new operations often added
