@@ -600,23 +600,65 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; explicit dispatch
-;; => new types      -- all generic methods must add a clause to the cond statement
-;;                      for each type and include code specific to the various types
-;; => new operations -- each new generic method should add cond clauses for every
-;;                      existing type
+;; => new types      -- all operation procedures must add a 
+;;                      clause to the cond statement
+;;                      for each type and include handlers 
+;;                      specific to the various types
+;; => new operations -- each new operation procedure should 
+;;                      add cond clauses for every existing 
+;;                      type with appropriate handler
 
 
 
 ;; data-directed style
-;;=> new types       -- 
-;;=> new operations  -- 
+;; => new types      -- Add handling procedures to the 
+;;                      generic operations table for the 
+;;                      specific combinations of types and 
+;;                      operations
+;;=> new operations  -- for every applicable type, add 
+;;                      handler procedurees to the generics
+;;                      tables and then create an "interface" 
+;;                      procedure for the operation that in 
+;;                      turn will call the generic-ops 
+;;                      procedure with op-type hard coded
 
 
 ;; message-passing-style
-;;=> new types added -- 
-;;=> new operations added -- 
+;;=> new types       -- Create an "object" procedure for every 
+;;                      type and add cond clauses with
+;;                      handlers for every applicable type
+;;=> new operations  -- Adjust every "object" procedure to add 
+;;                      cond clause with handler for 
+;;                      applicable types
+
+
+;; Whether new types are added often or new opereations are
+;; added more often, data driven method may be the best
+;; approach because
+;; (i) Avoidance of code duplication and minimize copy-paste 
+;;     errors
+;; (ii) Employing proper abstraction improves maintainability 
+;;      and makes code easier to read
+;; (iii) Additive -- Modules can be incorporated additvely
+;;      without having to modify existing code repeatedly. 
+;;      This helps with decpoupling/decentralization. 
+;; (iv) Related to additivity -- there couple be hundres of
+;;      types or hundreds of operations - no one person may
+;;      be familiar with them all
 
 
 
-;; System where new types often added
-;; System where new operations often added
+;; Ultimately the choice of method/approach will rest on
+;; (i) Are we dispatching on more than one type. If yes, 
+;;     choose data driven style
+;; (ii) Do the operations need access to shared state? If so
+;;      message passing style will be needed
+
+
+;; This is a very important question/issue and needs a lot of 
+;; thought/understanding and ability to visualize.
+;; Ideas behind Polymorphism, object oriented programming,
+;; etc. arose from this and related questions. 
+
+;; The answer to this question will likely be updated upon
+;; further thought, experience and understanding.
