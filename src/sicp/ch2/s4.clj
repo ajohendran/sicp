@@ -601,13 +601,13 @@
 
 ;; Issues to consider --
 ;; (i) Additivity 
-;;      (a) Is generic interface procedure or type-object editable/modifiable?
-;;      (b) Are they in a different package/module?
-;;      (b) Is it simple and easy to modify existing code? Is it desirable to do so?
-;;      (c) In general is it better to be able to just add code and not update/modify?
-;;      (d) How many people are maintaining the interface procedures or type-objects?
-;;          How many independent/unrelated people are adding types and 
-;;          operations on types?
+;;    (a) Is generic interface procedure or type-object editable/modifiable?
+;;    (b) Are they in a different package/module?
+;;    (c) Is it simple and easy to modify existing code? Is it desirable to do so?
+;;    (d) In general is it better to be able to just add code and not update/modify?
+;;    (e) How many people are maintaining the interface procedures or type-objects?
+;;        How many independent/unrelated people are adding types and operations on
+;;        types?
 ;; (ii) Do the handler procedures need access to shared state?
 ;; (iii) Use of abstraction, avoidance of copy/pasting and duplicated code
 
@@ -642,33 +642,38 @@
 ;;                      handler for applicable types
 
 
-;; Whether new types are added often or new operations are
-;; added more often, data driven method may be the best
-;; approach because
+;; Whether new types are added often or new operations are added more often,
+;; data driven method may be the best approach because
 ;; (i) Avoidance of code duplication and minimize copy-paste 
 ;;     errors
-;; (ii) Employing proper abstraction improves maintainability 
-;;      and makes code easier to read
-;; (iii) Additive -- Modules can be incorporated additvely
-;;      without having to modify existing code repeatedly. 
-;;      This helps with decpoupling/decentralization. 
-;; (iv) Related to additivity -- there couple be hundres of
-;;      types or hundreds of operations - no one person may
-;;      be familiar with them all
-
+;; (ii) Employing proper abstraction improves maintainability and makes code
+;;      easier to read
+;; (iii) Additive -- Modules can be incorporated additvely without having to
+;;       modify existing code repeatedly. This helps with decpoupling and
+;;       decentralization.
+;; (iv) Related to additivity -- there could be dozens of types or dozens of
+;;      operations - no one person may be concerned with or be familiar with them
+;;      all.
 
 
 ;; Ultimately the choice of method/approach will rest on
-;; (i) Are we dispatching on more than one type. If yes, 
-;;     choose data driven style
-;; (ii) Do the operations need access to shared state? If so
-;;      message passing style will be needed
+;; (i) Are we dispatching on more than one type. If yes, choose data driven style
+;; (ii) Do the handlers/accesors need access to shared state? If so message
+;;      passing style will be needed
+;; (iii) If dispatching it on just one type, with no shared state issues, either
+;;      approach is viable. However practical considerations will have to be taken
+;;      into account.
+;;      a) Which of the methods has faster implementation? Since Clojure "embraces"
+;;         the JVM, dispatch on type is faster with message passing style.
+;;      b) Additivity - clojure provides additivity for message passing style
+;;         through constructs like extend.
+;; (iv) What if dispatch has to be more general than just be based on type?
+;;      Arbitrary dispatch through multi-methods, predicate-dispatch, etc. are
+;;      based on data directed method
 
 
 ;; This is a very important question/issue and needs a lot of 
 ;; thought/understanding and ability to visualize.
-;; Ideas behind Polymorphism, object oriented programming,
-;; etc. arose from this and related questions. 
+;; Issues behind runtime-polymorphism, parametric polymorphism, object oriented
+;; programming, etc. arose from this and related questions (coercion/hierarchy). 
 
-;; The answer to this question will likely be updated upon
-;; further thought, experience and understanding.
