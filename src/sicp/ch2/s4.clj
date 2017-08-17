@@ -599,40 +599,50 @@
 ;;;;  Ex 2.76
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; explicit dispatch
-;; => new types      -- all operation procedures must add a 
-;;                      clause to the cond statement
-;;                      for each type and include handlers 
-;;                      specific to the various types
-;; => new operations -- each new operation procedure should 
-;;                      add cond clauses for every existing 
-;;                      type with appropriate handler
+;; Issues to consider --
+;; (i) Additivity 
+;;      (a) Is generic interface procedure or type-object editable/modifiable?
+;;      (b) Are they in a different package/module?
+;;      (b) Is it simple and easy to modify existing code? Is it desirable to do so?
+;;      (c) In general is it better to be able to just add code and not update/modify?
+;;      (d) How many people are maintaining the interface procedures or type-objects?
+;;          How many independent/unrelated people are adding types and 
+;;          operations on types?
+;; (ii) Do the handler procedures need access to shared state?
+;; (iii) Use of abstraction, avoidance of copy/pasting and duplicated code
 
+
+;; explicit dispatch
+;; => new types      -- Existing code will have to be updated.
+;;                      all operation procedures must add a clause to the cond 
+;;                      statement for each type and include handlers specific 
+;;                      to the various types
+;; => new operations -  More additive with new code added each new operation 
+;;                      procedure should add cond clauses for every existing 
+;;                      type with appropriate handler — new code
 
 
 ;; data-directed style
-;; => new types      -- Add handling procedures to the 
-;;                      generic operations table for the 
-;;                      specific combinations of types and 
-;;                      operations
-;;=> new operations  -- for every applicable type, add 
-;;                      handler procedurees to the generics
-;;                      tables and then create an "interface" 
-;;                      procedure for the operation that in 
-;;                      turn will call the generic-ops 
-;;                      procedure with op-type hard coded
+;; => new types      -- Additive.
+;;                      Add handling procedures to the generic operations table 
+;;                      for the specific combinations of types and operations
+;;=> new operations  -- Additive.
+;                       For every applicable type, add handler procedurees to 
+;;                      the generics tables and then create an "interface" 
+;;                      procedure for the operation that in turn will call the 
+;;                      generic-ops procedure with op-type hard coded
 
 
 ;; message-passing-style
-;;=> new types       -- Create an "object" procedure for every 
-;;                      type and add cond clauses with
-;;                      handlers for every applicable type
-;;=> new operations  -- Adjust every "object" procedure to add 
-;;                      cond clause with handler for 
-;;                      applicable types
+;;=> new types       -- Additive, with new code. 
+;;                      Create an "object" procedure for every type and add cond 
+;;                      clauses with handlers for every applicable type
+;;=> new operations  -- Not additive — existing code needs to be updated
+;;                      Adjust every "object" procedure to add cond clause with 
+;;                      handler for applicable types
 
 
-;; Whether new types are added often or new opereations are
+;; Whether new types are added often or new operations are
 ;; added more often, data driven method may be the best
 ;; approach because
 ;; (i) Avoidance of code duplication and minimize copy-paste 
