@@ -5,11 +5,15 @@
 ;;;;  Multiple Representations for Abstract Data
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Generic Procedures -- procedures that can operate on data that may be represented in more than one way.
+;; Generic Procedures -- procedures that can operate on data that may be
+;; represented in more than one way.
 
-;; Type Tags -- Main technique for building generic procedures will be to work in terms of data objects that have type tags, that is, data objects that include explicit information about how they are to be processed
+;; Type Tags -- Main technique for building generic procedures will be to work
+;; in terms of data objects that have type tags, that is, data objects that
+;; include explicit information about how they are to be processed
 
-;; Data-directed Programming -- a powerful and convenient implementation strategy for additively assembling systems with generic operations
+;; Data-directed Programming -- a powerful and convenient implementation
+;; strategy for additively assembling systems with generic operations
 
 
 
@@ -468,7 +472,7 @@
 (defn attach-tag [type-tag contents]
   (list type-tag contents))
 
-;; modified from book. Use 'NO-TYPE for when typw is not needed
+;; modified from book. Use 'NO-TYPE for when type is not needed
 (defn type-tag [datum]
   (if (seq? datum)
     (first datum)
@@ -601,13 +605,18 @@
 
 ;; Issues to consider --
 ;; (i) Additivity 
-;;    (a) Is generic interface procedure or type-object editable/modifiable?
-;;    (b) Are they in a different package/module?
+;;    (a) Is the generic interface procedure or the type-object editable/modifiable
+;;        at all?
+;;    (b) Are they in different packages/modules?
 ;;    (c) Is it simple and easy to modify existing code? Is it desirable to do so?
-;;    (d) In general is it better to be able to just add code and not update/modify?
-;;    (e) How many people are maintaining the interface procedures or type-objects?
+;;        How mny types or operations are we considering?
+;;    (d) How many people are maintaining the interface procedures or type-objects?
 ;;        How many independent/unrelated people are adding types and operations on
 ;;        types?
+;;    (e) In general, is additive modification better than updating or modifying
+;;        existing code? No one is able to foresee all possible uses, especially
+;;        with possible future requirements and changes. So always better to maintain
+;;        indirection and ability for additive changes?
 ;; (ii) Do the handler procedures need access to shared state?
 ;; (iii) Use of abstraction, avoidance of copy/pasting and duplicated code
 
@@ -617,9 +626,9 @@
 ;;                      all operation procedures must add a clause to the cond 
 ;;                      statement for each type and include handlers specific 
 ;;                      to the various types
-;; => new operations -  More additive with new code added each new operation 
+;; => new operations -  More additive -- with new code added, each new operation 
 ;;                      procedure should add cond clauses for every existing 
-;;                      type with appropriate handler — new code
+;;                      type with appropriate handler
 
 
 ;; data-directed style
@@ -627,7 +636,7 @@
 ;;                      Add handling procedures to the generic operations table 
 ;;                      for the specific combinations of types and operations
 ;;=> new operations  -- Additive.
-;                       For every applicable type, add handler procedurees to 
+;;                      For every applicable type, add handler procedurees to 
 ;;                      the generics tables and then create an "interface" 
 ;;                      procedure for the operation that in turn will call the 
 ;;                      generic-ops procedure with op-type hard coded
@@ -644,8 +653,7 @@
 
 ;; Whether new types are added often or new operations are added more often,
 ;; data driven method may be the best approach because
-;; (i) Avoidance of code duplication and minimize copy-paste 
-;;     errors
+;; (i) Copy-paste errors and code duplication issues can be avoided 
 ;; (ii) Employing proper abstraction improves maintainability and makes code
 ;;      easier to read
 ;; (iii) Additive -- Modules can be incorporated additvely without having to
