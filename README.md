@@ -6,4 +6,4 @@ Using clojure as the programming language only because I prefer the syntax and t
 
 Copyright © 2018 ARAVINDH JOHENDRAN
 
-Distributed under the Eclipse Public License either version 1.0
+Distributed under the Eclipse Public License version 1.0
