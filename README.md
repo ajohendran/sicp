@@ -1,14 +1,9 @@
 # sicp
 
-A Clojure library designed to ... well, that part is up to you.
+Working through problems from the book Structure and Interpretation of Computer Programs.
 
-## Usage
+Using clojure as the programming language only because I prefer the syntax and there is familiarity — not using any clojure specific features to solve the exercise problems.
 
-FIXME
+Copyright © 2018 ARAVINDH JOHENDRAN
 
-## License
-
-Copyright © 2014 FIXME
-
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+Distributed under the Eclipse Public License version 1.0
