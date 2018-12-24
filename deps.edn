@@ -1,0 +1,6 @@
+{
+ :deps {org.clojure/clojure {:mvn/version "1.10.0"}
+        quil {:mvn/version "2.6.0"
+              :exclusions [com.lowagie/itext]}}
+ }
+

@@ -1,6 +1,9 @@
 /target
 /classes
 /checkouts
+/.idea
+*.iml
+/.cpcache
 pom.xml
 pom.xml.asc
 *.jar
