@@ -36,10 +36,10 @@
 ;; => 6
 
 (def a 3)
-;; => #'sicp.ch1.s1/a 
+;; => #'sicp.ch1.s1/a
 
 (def b (+ a 1))
-;; => #'sicp.ch1.s1/b 
+;; => #'sicp.ch1.s1/b
 
 (+ a b (* a b))
 ;; => 19
@@ -129,8 +129,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ex 1.4
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(define (a-plus-abs-b a b)
-  ((if (> b 0) + -) a b))
+;; (define (a-plus-abs-b a b)
+;;  ((if (> b 0) + -) a b))
 
 ;; The expression (if (> b 0) + -) is evaluated to determine the operator
 ;; which is the value of either + or - symbol.
@@ -145,12 +145,12 @@
 
 (defn p [] (p))
 
-(define (test x y)
+(defn test-this [x y]
   (if (= x 0)
       0
       y))
 
-;; (test 0 (p))
+;; (test-this 0 (p))
 ;; Applicative Order -> (p) isexecuted first and program falls into infinite loop
 ;; Normal Order -> 0 is returned
 
@@ -201,7 +201,7 @@
           (sqrt-iter (improve guess x) x)))
 
 
-;; Answer - we fall into infinite loop because new-if, as a function, will have to evaluate its arguments 
+;; Answer - we fall into infinite loop because new-if, as a function, will have to evaluate its arguments
 
 
 
@@ -220,9 +220,9 @@
 ;; When good-enough? squares 7453559.924999261 and compares it to 55555555555555, the difference of 0.0078125 is greater than 0.001 . Improve finds the average of 7453559.924999261 and 7453559.924999262 (which is 55555555555555 divided by 7453559.924999261)  and returns 7453559.924999261 again.
 ;; As we get closer to the answer, 1/guess would be close to X, and the difference would be in nth decimal place. average of two numbers with a difference in only nth decimal place would yield one of the numbers again due to precision issues.
 
-;; For very small input values of X (say 0.00000005), guess reaches a value (0.031250532810688444) such that square produces a number (0.000976595800952) whose diff from X is less than 0.001. 
+;; For very small input values of X (say 0.00000005), guess reaches a value (0.031250532810688444) such that square produces a number (0.000976595800952) whose diff from X is less than 0.001.
 ;; (good-enough? 0.031250532810688444 0.00000005) will return true because difference between (square guess) and X is 0.000976545800952, which is less than tolerance of 0.001. (square guess) will produce an arbitrarily small number less than tolerance. x is an even smaller number. So the difference between these two numbers will be lower than tolerance. So any guess value whole square is lower than tolerance will essentially pass the good enough test.
-;; If we bump down the tolerance in good-enough? to 0.0000000001, we will get much closer to the right answer. 
+;; If we bump down the tolerance in good-enough? to 0.0000000001, we will get much closer to the right answer.
 
 (defn new-good-enough? [guess old-guess]
   (< (/ (Math/abs (- guess old-guess))
@@ -252,5 +252,3 @@
   (if (new-good-enough? guess old-guess)
     guess
     (cbrt-iter (improve-cbrt guess x) guess x)))
-
-

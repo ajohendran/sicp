@@ -851,7 +851,7 @@
 
 (defn scale-tree [tree factor]
   (cond (nil? tree) (list)
-        (seq? tree) (cons (scale-tree (first tree) factor) 
+        (seq? tree) (cons (scale-tree (first tree) factor)
                           (scale-tree (next tree) factor))
         :else (* factor tree)))
 
@@ -876,7 +876,7 @@
 (defn square-tree [tree]
   (cond (nil? tree) (list)
         (not (seq? tree)) (square tree)
-        :else (cons (square-tree (first tree)) (square-tree (next tree))))) 
+        :else (cons (square-tree (first tree)) (square-tree (next tree)))))
 
 
 (defn square-tree [tree]
@@ -982,7 +982,7 @@
 (defn enumerate-tree [tree]
   (cond (empty? tree) (list)
         (not (seq? tree)) (list tree)
-        :else (append (enumerate-tree (first tree)) 
+        :else (append (enumerate-tree (first tree))
                       (enumerate-tree (next tree)))))
 
 (defn sum-odd-squares [tree]
@@ -1043,7 +1043,7 @@
    0
    coeffs-seq))
 
-;; 1 + 3x + 5x3 + x5 at x = 2 
+;; 1 + 3x + 5x3 + x5 at x = 2
 (horner-eval 2 (list 1 3 0 5 0 1))
 (horner-eval 2 (list 1 3 0 5))
 
@@ -1256,11 +1256,11 @@
   (cond
     (= result (dec m)) (rem (square result) m)
     (= result 1) (rem (square result) m)
-    (= (rem (square result) m) 1) 0 
+    (= (rem (square result) m) 1) 0
     :else (rem (square result) m)))
 
 (defn expmod-mr [base exp m]
-  (cond 
+  (cond
     (= exp 1) base
     (even? exp) (check-non-trivial-sqrt
                  (expmod-mr base (/ exp 2) m)
@@ -1393,7 +1393,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Note: this exercise requires a lot of work with pen and paper
-  
+
 (defn make-position [row col]
   (list row col))
 
@@ -1402,7 +1402,7 @@
 
 (defn col-position [pos]
   (second pos))
- 
+
 (def empty-board (list))
 
 (defn adjoin-position [row col rest-of-queens]
@@ -1410,32 +1410,32 @@
 
 (defn same-row? [p1 p2]
   (= (row-position p1) (row-position p2)))
-  
+
 (defn diagonal-down? [p1 p2]
-  (= (- (row-position p1) (row-position p2)) 
+  (= (- (row-position p1) (row-position p2))
      (- (col-position p1) (col-position p2))))
-     
+
 (defn diagonal-up? [p1 p2]
-  (= (- (row-position p1) (row-position p2)) 
+  (= (- (row-position p1) (row-position p2))
      (- (col-position p2) (col-position p1))))
-     
+
 (defn queen-check-fn [p1]
   (fn [p2]
-    (or (same-row? p1 p2) 
+    (or (same-row? p1 p2)
         (diagonal-down? p1 p2)
         (diagonal-up? p1 p2))))
 
-(defn any? [pred coll]
+(defn any-in? [pred coll]
   (and (not (empty? coll))
        (or (pred (first coll))
            (recur pred (next coll)))))
-     
+
 (defn safe? [pos]
   (or (< (length pos) 2)
-      (not (any? (queen-check-fn (first pos)) (next pos)))))
+      (not (any-in? (queen-check-fn (first pos)) (next pos)))))
 
 (defn queens [board-size]
-  (defn queen-cols [k] 
+  (defn queen-cols [k]
     (if (= k 0)
         (list empty-board)
         (filter
@@ -1540,13 +1540,13 @@
        (or (= pos (first coll))
            (= diag-dist (abs (- pos (first coll))))
            (recur pos (inc diag-dist) (next coll)))))
-     
+
 (defn safe-2? [pos]
   (or (< (length pos) 2)
       (not (in-check-2? (first pos) 1 (next pos)))))
 
 (defn queens-2 [board-size]
-  (defn queen-cols [k] 
+  (defn queen-cols [k]
     (if (= k 0)
         (list empty-board-2)
         (filtere
@@ -1580,7 +1580,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn queens-2 [board-size]
-  (defn queen-cols [k] 
+  (defn queen-cols [k]
     (if (= k 0)
         (list empty-board-2)
         (filtere
@@ -1594,7 +1594,7 @@
   (queen-cols board-size))
 
 (defn queens-3 [board-size]
-  (defn queen-cols [k] 
+  (defn queen-cols [k]
     (if (= k 0)
         (list empty-board-2)
         (filtere
@@ -1607,7 +1607,7 @@
           (enumerate-interval 1 board-size)))))
   (queen-cols board-size))
 
-;; k -> (queens-2) | time (queens-3) | ratio 
+;; k -> (queens-2) | time (queens-3) | ratio
 ;; 2 -> 0.07       | 0.08            | 1.14
 ;; 3 -> 0.083      | 0.154           | 1.86
 ;; 4 -> 0.13       | 0.92            | 7.07
@@ -1653,4 +1653,3 @@
 
 ;; See the file pictlang.clj in same folder as this file for exercises
 ;; 2.44 to 2.52
-

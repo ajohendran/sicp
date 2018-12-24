@@ -54,7 +54,7 @@
 (defn integral-2 [f a b dx]
   (defn i-term [x] (f (+ x (/ dx 2.0))))
   (defn add-dx [x] (+ x dx))
-  (* dx (sum i-term a add-dx b))) 
+  (* dx (sum i-term a add-dx b)))
 
 ;; sicp.ch1.s3> (integral-correct cube 0 1 0.1)
 
@@ -188,7 +188,7 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Ex 1.31 - Product 
+;;; Ex 1.31 - Product
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
@@ -263,7 +263,7 @@
   (defn process [next-val]
     (cond
       (> next-val b) null-value
-      (filtr next-val) (combiner (term next-val) (process (nxt next-val))) 
+      (filtr next-val) (combiner (term next-val) (process (nxt next-val)))
       :else (process (nxt next-val))))
   (process a))
 
@@ -272,7 +272,7 @@
   (defn process [next-val res]
     (cond
       (> next-val b) res
-      (filtr next-val) (process (nxt next-val) (combiner res (term next-val))) 
+      (filtr next-val) (process (nxt next-val) (combiner res (term next-val)))
       :else (process (nxt next-val) res)))
   (process a null-value))
 
@@ -286,11 +286,11 @@
   (cond
     (= result (dec m)) (rem (square result) m)
     (= result 1) (rem (square result) m)
-    (= (rem (square result) m) 1) 0 
+    (= (rem (square result) m) 1) 0
     :else (rem (square result) m)))
 
 (defn expmod-mr [base exp m]
-  (cond 
+  (cond
     (= exp 1) base
     (even? exp) (check-non-trivial-sqrt
                  (expmod-mr base (/ exp 2) m)
@@ -563,7 +563,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;recursive
-(defn cont-frac 
+(defn cont-frac
   ([n d k] (cont-frac n d k 1))
   ([n d k cntr]
    (if (< cntr k)
@@ -573,7 +573,7 @@
 
 
 ;; iterative
-(defn cont-frac 
+(defn cont-frac
   ([n d k] (cont-frac n d k 0))
   ([n d k res]
    (if (= k 0)
@@ -598,7 +598,7 @@
 
 ;; 1, 2, 1, 1, 4, 1, 1, 6, 1, 1, 8, ....
 
-;; 2nd term  -> 1 * 2  
+;; 2nd term  -> 1 * 2
 ;; 5th term  -> 2 * 2
 ;; 8         -> 3 * 2
 ;; 11        -> 4 * 2
@@ -621,7 +621,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Using overloaded method definition
-(defn cont-frac 
+(defn cont-frac
   ([n d k] (cont-frac n d k + 0.0))
   ([n d k f] (cont-frac n d k f 0.0))
   ([n d k f res]
@@ -630,7 +630,7 @@
      (recur n d (dec k) f (/ (n k) (f (d k) res))))))
 
 ;; using loop/recur
-(defn cont-frac 
+(defn cont-frac
   ([n d k] (cont-frac n d k + 0.0))
   ([n d k f null-value]
    (loop [k k
@@ -804,10 +804,10 @@
 ;;; Ex 1.41
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn double [f]
+(defn dubl [f]
   (fn [x] (f (f x))))
 
-;; (((double (double double)) inc) 5)
+;; (((dubl (dubl dubl)) inc) 5)
 ;; 21
 
 
@@ -831,7 +831,7 @@
 (defn repeated [f n]
   (fn [x]
     (defn try-it [cntr res]
-      (if (<= cntr 1) 
+      (if (<= cntr 1)
         res
         (recur (dec cntr) (f res))))
     (try-it n (f x))))
@@ -842,7 +842,7 @@
   (fn [x]
     (loop [cntr n
            res (f x)]
-      (if (<= cntr 1) 
+      (if (<= cntr 1)
         res
         (recur (dec cntr) (f res))))))
 
@@ -853,7 +853,7 @@
 (defn repeated [f n]
   (loop [cntr n
          res f]
-    (if (<= cntr 1) 
+    (if (<= cntr 1)
       res
       (recur (dec cntr) (compose f res)))))
 
@@ -1046,7 +1046,7 @@
 
 (defn nth-root [x n]
   (fixed-point ((repeated average-damp (int (log2 n)))
-                (fn [y] (/ x (Math/pow y (dec n)))))  
+                (fn [y] (/ x (Math/pow y (dec n)))))
                1.0))
 
 
