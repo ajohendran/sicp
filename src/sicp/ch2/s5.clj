@@ -79,6 +79,7 @@
       (put-proc 'make '(primitive) (fn [x] (tag x)))
       (put-proc 'value '(primitive) identity))
   'installed-primitive-package)
+(install-primitive-number-package)
 
 ;; constructor
 (defn make-primitive [x]
@@ -143,6 +144,8 @@
     (put-proc 'make '(rational) (fn [x y] (tag (make-rat x y)))))
   'installed-rational-number-package)
 
+(install-rational-number-package)
+
 ;; constructor
 (defn make-rational [x y]
   ((get-proc 'make '(rational)) x y))
@@ -203,6 +206,8 @@
               (fn [mag ang] (tag (make-from-mag-ang mag ang)))))
   'installed-polar-package)
 
+(install-polar-package)
+
 ;; constructors
 (defn make-polar-from-real-imag [real imag]
   ((get-proc 'make-from-real-imag '(polar)) real imag))
@@ -236,6 +241,8 @@
     (put-proc 'make-from-mag-ang '(rectangular)
               (fn [mag ang] (tag (make-from-mag-ang mag ang)))))
   'installed-rectangular-package)
+
+(install-rectangular-package)
 
 ;; constructors
 (defn make-rectangular-from-real-imag [real imag]
@@ -286,6 +293,8 @@
     (put-proc 'make-complex-from-mag-ang '(complex)
               (fn [mag ang] (tag (make-complex-mag-ang mag ang)))))
   'installed-complex-number-package)
+
+(install-complex-number-package)
 
 ;; constructors
 (defn make-complex-from-real-imag [real imag]
@@ -406,6 +415,11 @@
 
 ;; attach-tag doesn't have to be modified
 
+(defn attach-tag [type-tag contents]
+  (if (= type-tag 'primitive)
+    contents
+    (list type-tag contents)))
+
 (defn type-tag [datum]
   (cond
     (seq? datum) (first datum)
@@ -417,6 +431,10 @@
     (seq? datum) (second datum)
     (number? datum) datum
     :else (throw (Exception. (str "Bad tagged datum -- CONTENTS " datum)))))
+
+
+;; (attach-tag 'primitive 5)
+;; ;; => 5
 
 ;; (type-tag 5)
 ;; ;; => primitive
@@ -463,7 +481,7 @@
 ;; (put-proc 'equ? '(rational rational)
 ;;           (fn [r1 r2] (and (= (numer r1) (numer r2))
 ;;                            (= (denom r1) (denom r2)))))
-;; def r1 (make-rational 1 2))
+;; (def r1 (make-rational 1 2))
 ;; (def r2 (make-rational 3 4))
 ;; (equ? r1 r2)
 
@@ -486,6 +504,7 @@
   (put-proc 'equ? '(primitive primitive) (fn [n1 n2] (= n1 n2)))
   (put-proc '=zero? '(primitive) (fn [n] (= n 0)))
   'installed-primitive-package-2)
+(install-primitive-number-package-2)
 
 ;; (equ? 5 6)
 ;; ;; => false
@@ -542,6 +561,8 @@
     (put-proc '=zero? '(rational)
               (fn [r] (= (numer r) 0))))
   'installed-rational-number-package)
+
+(install-rational-number-package)
 
 ;; Can also define a short version
 ;; (defn install-rational-number-package-2 []
@@ -623,6 +644,8 @@
               (fn [z] (== (magnitude z) 0))))
   'installed-complex-number-package)
 
+(install-complex-number-package)
+
 ;; There is a very interesting problem of how to handle when mixed complex types
 ;; are provided as arguments to equ?
 ;; Best to handle by considering one representation as basis. For equality check,
@@ -675,4 +698,319 @@
 
 
 
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Combining Data of Different Types -- Coercion & Hierarchies
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(def coercion-table (atom {}))
+
+(defn put-coercion [from-type to-type proc]
+  (swap! coercion-table assoc-in [from-type to-type] proc))
+
+(defn get-coercion [from-type to-type]
+  (get-in @coercion-table [from-type to-type]))
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.81
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; a. ;;;
+
+;; If exp is called witah with two complex numbers as arguments, 
+;; error will be thrown "No method for these types (exp complex complex)"
+
+
+;;; b. ;;;
+
+;; No, Louis is wrong -- apply-generic will work as is without coercing
+;; arguments of same type
+
+
+;;; c ;;;
+(defn apply-generic [op & args]
+  (let [tags (map type-tag args)
+        proc (get-proc op tags)]
+    (cond
+      proc
+      (apply proc (map contents args))
+      (and (= (count tags) 2)
+           (not= (first tags) (second tags))) ;; main part of answer
+      (let [type1 (first tags)
+            type2 (second tags)
+            arg-val1 (first args)
+            arg-val2 (second args)
+            t1->t2 (get-coercion type1 type2)
+            t2->t1 (get-coercion type2 type1)]
+        (cond
+          t1->t2 (apply-generic op (t1->t2 arg-val1) arg-val2)
+          t2->t1 (apply-generic op arg-val1 (t2->t1 arg-val2))
+          :else     (throw (Exception.
+                            (str "No method for these types -- APPLY-GENERIC "
+                                 (cons op args))))))
+      :else
+      (throw
+       (Exception.
+        (str "No method for these types -- APPLY-GENERIC " (cons op args)))))))
+
+
+;; (add 5 (make-rational 4 5))
+;; ;; Unhandled java.lang.Exception
+;; ;; No method for these types -- APPLY-GENERIC (add 5 (rational (4 5)))
+(defn primitive-number->rational-number [n]
+  (make-rational n 1))
+
+(put-coercion 'primitive 'rational primitive-number->rational-number)
+
+
+;; (add 5 (make-rational 4 5))
+;; ;; => (rational (29 5))
+
+;; (add (make-rational 4 5) 5)
+;; ;; => (rational (29 5))
+
+
+(defn exp [x y] (apply-generic 'exp x y))
+
+;; cheating here a bit -- 
+(put-proc 'exp '(primitive primitive)
+          (fn [x y] (attach-tag 'primitive (int (Math/pow x y)))))
+
+;; (exp 2 4)
+;; ;; => 16
+
+;; (exp (make-rational 1 2) (make-rational 3 4))
+;; Execution error at sicp.ch2.s5/apply-generic (REPL:749).
+;; No method for these types -- APPLY-GENERIC (exp (rational (1 2)) (rational (3 4)))
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.82
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn add [arg1 arg2 & more]
+  (let [two-arg-fn (fn [x y] (apply-generic 'add x y))]
+    (reduce two-arg-fn (two-arg-fn arg1 arg2) more)))
+
+
+(defn find-coercions-to [to-type from-types]
+  (if (empty? from-types)
+    '()
+    (let [coercion-fn (if (= (first from-types) to-type)
+                        identity
+                        (get-coercion (first from-types) to-type))]
+      (if coercion-fn
+        (let [rest-of-results (find-coercions-to to-type (next from-types))]
+          (if rest-of-results
+            (cons coercion-fn rest-of-results)
+            nil))
+        nil))))
+
+(defn find-possible-coercions [tags-1 tags-2]
+  (if (empty? tags-2)
+    nil
+    (let [coercions (find-coercions-to (first tags-2)
+                                       (concat tags-1 tags-2))]
+      (if (not-empty coercions) 
+        coercions
+        (find-possible-coercions (concat tags-1 (list (first tags-2)))
+                                 (next tags-2))))))
+
+(defn apply-generic [op & args]
+  (let [tags (map type-tag args)
+        proc (get-proc op tags)]
+    (cond
+      proc
+      (apply proc (map contents args))
+      (> (count args) 1)
+      (let [coercions (find-possible-coercions '() tags)]
+        (if coercions
+          (apply apply-generic (cons op (map (fn [coercion-fn arg] (coercion-fn arg))
+                                             coercions
+                                             args)))
+          (throw (Exception.
+                  (str "No method for these types -- APPLY-GENERIC "
+                       (cons op args))))))
+      :else
+      (throw (Exception.
+              (str "No method for these types -- APPLY-GENERIC "
+                   (cons op args)))))))
+
+
+;; sicp.ch2.s5> (add (make-rational 1 2) 5 (make-rational 4 5) 6)
+;; TRACE t7853: (sicp.ch2.s5/find-possible-coercions () (rational primitive))
+;; TRACE t7854: | (sicp.ch2.s5/find-coercions-to rational (rational primitive))
+;; TRACE t7855: | | (sicp.ch2.s5/find-coercions-to rational (primitive))
+;; TRACE t7856: | | | (sicp.ch2.s5/find-coercions-to rational nil)
+;; TRACE t7856: | | | => ()
+;; TRACE t7855: | | => (#function[sicp.ch2.s5/primitive-number->rational-number])
+;; TRACE t7854: | => (#function[clojure.core/identity] #function[sicp.ch2.s5/primitive-number->rational-number])
+;; TRACE t7853: => (#function[clojure.core/identity] #function[sicp.ch2.s5/primitive-number->rational-number])
+;; TRACE t7857: (sicp.ch2.s5/find-possible-coercions () (rational primitive))
+;; TRACE t7858: | (sicp.ch2.s5/find-coercions-to rational (rational primitive))
+;; TRACE t7859: | | (sicp.ch2.s5/find-coercions-to rational (primitive))
+;; TRACE t7860: | | | (sicp.ch2.s5/find-coercions-to rational nil)
+;; TRACE t7860: | | | => ()
+;; TRACE t7859: | | => (#function[sicp.ch2.s5/primitive-number->rational-number])
+;; TRACE t7858: | => (#function[clojure.core/identity] #function[sicp.ch2.s5/primitive-number->rational-number])
+;; TRACE t7857: => (#function[clojure.core/identity] #function[sicp.ch2.s5/primitive-number->rational-number])
+;; (rational (123 10))
+
+
+
+;; sicp.ch2.s5> (find-possible-coercions '() '(primitive rational primitive rational))
+;; TRACE t7863: (sicp.ch2.s5/find-possible-coercions () (primitive rational primitive rational))
+;; TRACE t7864: | (sicp.ch2.s5/find-coercions-to primitive (primitive rational primitive rational))
+;; TRACE t7865: | | (sicp.ch2.s5/find-coercions-to primitive (rational primitive rational))
+;; TRACE t7865: | | => nil
+;; TRACE t7864: | => nil
+;; TRACE t7866: | (sicp.ch2.s5/find-possible-coercions (primitive) (rational primitive rational))
+;; TRACE t7867: | | (sicp.ch2.s5/find-coercions-to rational (primitive rational primitive rational))
+;; TRACE t7868: | | | (sicp.ch2.s5/find-coercions-to rational (rational primitive rational))
+;; TRACE t7869: | | | | (sicp.ch2.s5/find-coercions-to rational (primitive rational))
+;; TRACE t7870: | | | | | (sicp.ch2.s5/find-coercions-to rational (rational))
+;; TRACE t7871: | | | | | | (sicp.ch2.s5/find-coercions-to rational nil)
+;; TRACE t7871: | | | | | | => ()
+;; TRACE t7870: | | | | | => (#function[clojure.core/identity])
+;; TRACE t7869: | | | | => (#function[sicp.ch2.s5/primitive-number->rational-number] #function[clojure.core/identity])
+;; TRACE t7868: | | | => (#function[clojure.core/identity] #function[sicp.ch2.s5/primitive-number->rational-number] #function[clojure.core/identity])
+;; TRACE t7867: | | => (#function[sicp.ch2.s5/primitive-number->rational-number] #function[clojure.core/identity] #function[sicp.ch2.s5/primitive-number->rational-number] #function[clojure.core/identity])
+;; TRACE t7866: | => (#function[sicp.ch2.s5/primitive-number->rational-number] #function[clojure.core/identity] #function[sicp.ch2.s5/primitive-number->rational-number] #function[clojure.core/identity])
+;; TRACE t7863: => (#function[sicp.ch2.s5/primitive-number->rational-number] #function[clojure.core/identity] #function[sicp.ch2.s5/primitive-number->rational-number] #function[clojure.core/identity])
+;; (#function[sicp.ch2.s5/primitive-number->rational-number]
+;;  #function[clojure.core/identity]
+;;  #function[sicp.ch2.s5/primitive-number->rational-number]
+;;  #function[clojure.core/identity])
+
+
+;; sicp.ch2.s5> (add (make-rational 1 2) 5 (make-complex-from-real-imag 4 5) 6)
+;; TRACE t7874: (sicp.ch2.s5/find-possible-coercions () (rational primitive))
+;; TRACE t7875: | (sicp.ch2.s5/find-coercions-to rational (rational primitive))
+;; TRACE t7876: | | (sicp.ch2.s5/find-coercions-to rational (primitive))
+;; TRACE t7877: | | | (sicp.ch2.s5/find-coercions-to rational nil)
+;; TRACE t7877: | | | => ()
+;; TRACE t7876: | | => (#function[sicp.ch2.s5/primitive-number->rational-number])
+;; TRACE t7875: | => (#function[clojure.core/identity] #function[sicp.ch2.s5/primitive-number->rational-number])
+;; TRACE t7874: => (#function[clojure.core/identity] #function[sicp.ch2.s5/primitive-number->rational-number])
+;; TRACE t7878: (sicp.ch2.s5/find-possible-coercions () (rational complex))
+;; TRACE t7879: | (sicp.ch2.s5/find-coercions-to rational (rational complex))
+;; TRACE t7880: | | (sicp.ch2.s5/find-coercions-to rational (complex))
+;; TRACE t7880: | | => nil
+;; TRACE t7879: | => nil
+;; TRACE t7881: | (sicp.ch2.s5/find-possible-coercions (rational) (complex))
+;; TRACE t7882: | | (sicp.ch2.s5/find-coercions-to complex (rational complex))
+;; TRACE t7882: | | => nil
+;; TRACE t7883: | | (sicp.ch2.s5/find-possible-coercions (rational complex) nil)
+;; TRACE t7883: | | => nil
+;; TRACE t7881: | => nil
+;; TRACE t7878: => nil
+;; Execution error at sicp.ch2.s5/apply-generic (REPL:839).
+;; No method for these types -- APPLY-GENERIC (add (rational (11 2)) (complex (rectangular (4 5))))
+
+(defn primitive-number->complex-number [n]
+  (make-complex-from-real-imag n 0))
+
+(put-coercion 'primitive 'complex primitive-number->complex-number)
+
+(defn rational-number->complex-number [r]
+  (make-complex-from-real-imag r 0))
+
+(put-coercion 'rational 'complex rational-number->complex-number)
+
+;; (find-possible-coercions '()
+;;                          '(primitive rational complex primitive rational complex))
+;; ;; => (#function[sicp.ch2.s5/primitive-number->complex-number] #function[sicp.ch2.s5/rational-number->complex-number] #function[clojure.core/identity] #function[sicp.ch2.s5/primitive-number->complex-number] #function[sicp.ch2.s5/rational-number->complex-number] #function[clojure.core/identity])
+
+
+;;;; A versoin that finds corecions only for unique set of types
+(defn foldl [op init s]
+  (loop [res init
+         remaining s]
+    (if (empty? remaining)
+      res
+      (recur (op res (first remaining))
+             (next remaining)))))
+
+;; hopelessly slow but it is OK.
+;; We haven't yet dealt with comparing/ordering symbols
+(defn get-member [pred lst]
+  (cond (empty? lst) nil
+        (pred (first lst)) (first lst)
+        :else (get-member pred (next lst))))
+
+(defn uniques [lst]
+  (foldl (fn [res elem] (if (get-member (fn [entry] (= entry elem)) res)
+                          res
+                          (cons elem res)))
+         '()
+         lst))
+
+
+(defn find-coercions-to [to-type from-types]
+  (if (empty? from-types)
+    '()
+    (let [coercion-fn (if (= (first from-types) to-type)
+                        identity
+                        (get-coercion (first from-types) to-type))]
+      (if coercion-fn
+        (let [rest-of-results (find-coercions-to to-type (next from-types))]
+          (if rest-of-results
+            (cons (list (first from-types) coercion-fn) rest-of-results)
+            nil))
+        nil))))
+
+(defn find-possible-coercions [tags-1 tags-2]
+  (if (empty? tags-2)
+    nil
+    (let [coercions (find-coercions-to (first tags-2)
+                                       (concat tags-1 tags-2))]
+      (if (not-empty coercions) 
+        coercions
+        (find-possible-coercions (concat tags-1 (list (first tags-2)))
+                                 (next tags-2))))))
+
+(defn apply-generic [op & args]
+  (let [tags (map type-tag args)
+        proc (get-proc op tags)
+        unique-tags (uniques tags)]
+    (cond
+      proc
+      (apply proc (map contents args))
+      (> (count unique-tags) 1)
+      (let [coercions (find-possible-coercions '() unique-tags)
+            get-coercion-for-type (fn [tag]
+                                    (second (get-member
+                                             (fn [entry]
+                                               (= (first entry) tag))
+                                             coercions)))]
+        (if coercions
+          (apply apply-generic
+                 (cons op (map (fn [arg]
+                                 ((get-coercion-for-type (type-tag arg)) arg))
+                               args)))
+          (throw (Exception.
+                  (str "No method for these types -- APPLY-GENERIC "
+                       (cons op args))))))
+      :else
+      (throw (Exception.
+              (str "No method for these types -- APPLY-GENERIC "
+                   (cons op args)))))))
+
+
+
+;; (find-possible-coercions '()
+;;                          (uniques '(primitive rational complex
+;;                                               primitive rational complex)))
+;; ;; => ((complex #function[clojure.core/identity]) (rational #function[sicp.ch2.s5/rational-number->complex-number]) (primitive #function[sicp.ch2.s5/primitive-number->complex-number]))
+
+
+;; (add (make-rational 1 2) 5 (make-rational 4 5) 6)
+;; ;; => (rational (123 10))
 
