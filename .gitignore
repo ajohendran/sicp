@@ -10,4 +10,5 @@ pom.xml.asc
 *.class
 /.lein-*
 /.nrepl-port
+/projectFilesBackup
 *.DS_Store

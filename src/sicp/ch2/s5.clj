@@ -13,10 +13,10 @@
 ;;     one type.This helps with consistency - code doesn't change if dispatch is
 ;;     on one or more types
 ;; (2) Selectors are defined for each data type even if not defined explicitly
-;;     in the book
+2;;     in the book
 
 
-;;;;;;;;;;;;;;;  Tag plumbing ;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;  Type tag plumbing ;;;;;;;;;;;;;;;
 
 (defn attach-tag [type-tag contents]
   (list type-tag contents))
@@ -24,15 +24,20 @@
 (defn type-tag [datum]
   (if (seq? datum)
     (first datum)
-    (throw (Exception. (str "Bad tagged datum -- TYPE-TAG " datum)))))
+    (throw (ex-info (str "Bad tagged datum -- TYPE-TAG " datum) {}))))
 
 (defn contents [datum]
   (if (seq? datum)
     (second datum)
-    (throw (Exception. (str "Bad tagged datum -- CONTENTS " datum)))))
+    (throw (ex-info (str "Bad tagged datum -- TYPE-TAG " datum) {}))))
 
 
 ;;;;;;;;;;;;;;; Generic Ops plumbing ;;;;;;;;;;;;;;;
+
+;; The book doesn't provde code to create maps at this stage.
+;; Not sure what the value is in writing code without being able
+;; to execute and poke around
+;; So using clojure atom and persistence map to implement generic methods
 
 (def op-type-table (atom {}))
 
@@ -48,8 +53,8 @@
      (if proc
        (apply proc (map contents args))
        (throw
-        (Exception.
-         (str "No method for these types -- APPLY-GENERIC " (list op args)))))))
+        (ex-info
+         (str "No method for these types -- APPLY-GENERIC " (list op args)) {})))))
 
 
 ;;;;;;;;;;;;;;;  Generic arithmetic procedures ;;;;;;;;;;;;;;;
@@ -413,7 +418,7 @@
 ;;;;  Ex 2.78
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; attach-tag doesn't have to be modified
+;; attach-tag needn't be modified
 
 (defn attach-tag [type-tag contents]
   (if (= type-tag 'primitive)
@@ -498,13 +503,20 @@
 ;; Operations for types such as polar and rectagular will also have to be
 ;; defined wthin a 'package'.
 
-
-(defn install-primitive-number-package-2 []
+(defn install-primitive-number-package []
   ;; interface to generic system
-  (put-proc 'equ? '(primitive primitive) (fn [n1 n2] (= n1 n2)))
-  (put-proc '=zero? '(primitive) (fn [n] (= n 0)))
-  'installed-primitive-package-2)
-(install-primitive-number-package-2)
+  (letfn [(tag [x] (attach-tag 'primitive x))]
+      (put-proc 'add '(primitive primitive) (fn [x y] (tag (+ x y))))
+      (put-proc 'sub '(primitive primitive) (fn [x y] (tag (- x y))))
+      (put-proc 'mul '(primitive primitive) (fn [x y] (tag (* x y))))
+      (put-proc 'div '(primitive primitive) (fn [x y] (tag (/ x y))))
+      (put-proc 'make '(primitive) (fn [x] (tag x)))
+      (put-proc 'value '(primitive) identity)
+      (put-proc 'equ? '(primitive primitive) (fn [n1 n2] (= n1 n2)))
+      (put-proc '=zero? '(primitive) (fn [n] (= n 0))))
+'installed-primitive-package)
+  
+(install-primitive-number-package)
 
 ;; (equ? 5 6)
 ;; ;; => false
@@ -1013,4 +1025,102 @@
 
 ;; (add (make-rational 1 2) 5 (make-rational 4 5) 6)
 ;; ;; => (rational (123 10))
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.83
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Errr ..... we haven't dealt with 'real' numbers yet.
+;; Skipping that as it really doesn't add value here
+
+(defn raise [arg]
+  (apply-generic 'raise arg))
+
+
+(defn install-primitive-number-package []
+  ;; interface to generic system
+  (letfn [(tag [x] (attach-tag 'primitive x))]
+      (put-proc 'add '(primitive primitive) (fn [x y] (tag (+ x y))))
+      (put-proc 'sub '(primitive primitive) (fn [x y] (tag (- x y))))
+      (put-proc 'mul '(primitive primitive) (fn [x y] (tag (* x y))))
+      (put-proc 'div '(primitive primitive) (fn [x y] (tag (/ x y))))
+      (put-proc 'make '(primitive) (fn [x] (tag x)))
+      (put-proc 'value '(primitive) identity)
+      (put-proc 'equ? '(primitive primitive) (fn [n1 n2] (= n1 n2)))
+      (put-proc '=zero? '(primitive) (fn [n] (= n 0)))
+      (put-proc 'raise '(primitive) (fn [n] (make-rational n 1))))
+'installed-primitive-package)
+
+
+;; Once again, due to tag stripping, raise has to be defined within a package
+;; for rational types
+(defn install-rational-number-package []
+  (letfn [;; internal procedures
+          (gcd [a b]
+            (if (= b 0)
+              a
+              (gcd b (rem a b))))
+          (make-rat [n d]
+            (let [g (gcd n d)]
+              (list (/ n g) (/ d g ))))
+          (numer [r] (first r))
+          (denom [r] (second r))
+          (add-rat [x y]
+            (make-rat (+ (* (numer x) (denom y))
+                         (* (numer y) (denom x)))
+                      (* (denom x) (denom y))))
+          (sub-rat [x y]
+            (make-rat (- (* (numer x) (denom y))
+                         (* (numer y) (denom x)))
+                      (* (denom x) (denom y))))
+          (mul-rat [x y]
+            (make-rat (* (numer x) (numer y))
+                      (* (denom x) (denom y))))
+          (div-rat [x y]
+            (make-rat (* (numer x) (denom y))
+                      (* (denom x) (numer y))))
+          (tag [x] (attach-tag 'rational x))]
+    (put-proc 'numer '(rational) (fn [r] (numer r)))
+    (put-proc 'denom '(rational) (fn [r] (denom r)))
+    (put-proc 'add '(rational rational)
+              (fn [x y] (tag (add-rat x y))))
+    (put-proc 'sub '(rational rational)
+              (fn [x y] (tag (sub-rat x y))))
+    (put-proc 'mul '(rational rational)
+              (fn [x y] (tag (mul-rat x y))))
+    (put-proc 'div '(rational rational)
+              (fn [x y] (tag (div-rat x y))))
+    (put-proc 'make '(rational) (fn [x y] (tag (make-rat x y))))
+    (put-proc 'equ? '(rational rational)
+              (fn [r1 r2] (and (= (numer r1) (numer r2))
+                               (= (denom r1) (denom r2)))))
+    (put-proc '=zero? '(rational)
+              (fn [r] (= (numer r) 0)))
+    (put-proc 'raise '(rational)
+              (fn [r] (make-complex-from-real-imag
+                       (tag (make-rat (numer r) (denom r))) 0))))
+  'installed-rational-number-package)
+
+
+;; (raise 5)
+;; ;; => (rational (5 1))
+
+;; (raise (raise 5))
+;; ;; => (complex (rectangular ((rational (5 1)) 0)))
+
+;; (raise (make-rational 5 8))
+;; ;; => (complex (rectangular ((rational (5 8)) 0)))
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;  Ex 2.84
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
