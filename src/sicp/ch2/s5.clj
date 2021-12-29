@@ -429,13 +429,13 @@
   (cond
     (seq? datum) (first datum)
     (number? datum) 'primitive
-    :else (throw (Exception. (str "Bad tagged datum -- TYPE-TAG " datum)))))
+    :else (throw (ex-info (str "Bad tagged datum -- TYPE-TAG " datum) {}))))
 
 (defn contents [datum]
   (cond
     (seq? datum) (second datum)
     (number? datum) datum
-    :else (throw (Exception. (str "Bad tagged datum -- CONTENTS " datum)))))
+    :else (throw (ex-info (str "Bad tagged datum -- TYPE-TAG " datum) {}))))
 
 
 ;; (attach-tag 'primitive 5)
@@ -761,13 +761,11 @@
         (cond
           t1->t2 (apply-generic op (t1->t2 arg-val1) arg-val2)
           t2->t1 (apply-generic op arg-val1 (t2->t1 arg-val2))
-          :else     (throw (Exception.
-                            (str "No method for these types -- APPLY-GENERIC "
-                                 (cons op args))))))
+          :else  (throw (ex-info
+                         (str "No method for these types -- APPLY-GENERIC " (list op args)) {}))))
       :else
-      (throw
-       (Exception.
-        (str "No method for these types -- APPLY-GENERIC " (cons op args)))))))
+      (throw (ex-info
+              (str "No method for these types -- APPLY-GENERIC " (list op args)) {})))))
 
 
 ;; (add 5 (make-rational 4 5))
@@ -847,13 +845,11 @@
           (apply apply-generic (cons op (map (fn [coercion-fn arg] (coercion-fn arg))
                                              coercions
                                              args)))
-          (throw (Exception.
-                  (str "No method for these types -- APPLY-GENERIC "
-                       (cons op args))))))
+          (throw (ex-info
+                  (str "No method for these types -- APPLY-GENERIC " (list op args)) {}))))
       :else
-      (throw (Exception.
-              (str "No method for these types -- APPLY-GENERIC "
-                   (cons op args)))))))
+      (throw (ex-info
+              (str "No method for these types -- APPLY-GENERIC " (list op args)) {})))))
 
 
 ;; sicp.ch2.s5> (add (make-rational 1 2) 5 (make-rational 4 5) 6)
@@ -1007,13 +1003,11 @@
                  (cons op (map (fn [arg]
                                  ((get-coercion-for-type (type-tag arg)) arg))
                                args)))
-          (throw (Exception.
-                  (str "No method for these types -- APPLY-GENERIC "
-                       (cons op args))))))
+          (throw (ex-info
+                  (str "No method for these types -- APPLY-GENERIC " (list op args)) {}))))
       :else
-      (throw (Exception.
-              (str "No method for these types -- APPLY-GENERIC "
-                   (cons op args)))))))
+      (throw (ex-info
+                  (str "No method for these types -- APPLY-GENERIC " (list op args)) {})))))
 
 
 
@@ -1123,4 +1117,6 @@
 ;;;;  Ex 2.84
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
+;; Exercise 2.84.  Using the raise operation of exercise 2.83, modify the apply-generic procedure so that it coerces its arguments to have the same type by the method of successive raising, as discussed in this section. You will need to devise a way to test which of two types is higher in the tower. Do this in a manner that is ``compatible'' with the rest of the system and will not lead to problems in adding new levels to the tower.
 
