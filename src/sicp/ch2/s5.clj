@@ -13,7 +13,7 @@
 ;;     one type.This helps with consistency - code doesn't change if dispatch is
 ;;     on one or more types
 ;; (2) Selectors are defined for each data type even if not defined explicitly
-2;;     in the book
+;;     in the book
 
 
 ;;;;;;;;;;;;;;;  Type tag plumbing ;;;;;;;;;;;;;;;
